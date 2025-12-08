@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
+#include <time.h>
 #include "algoritmos.h"
 #include "config.h"
 
@@ -109,7 +110,6 @@ AristaPrim* prim(GrafoMatriz* grafo, int* numAristas) {
             arbol[*numAristas].origen = padre[i];
             arbol[*numAristas].destino = i;
             arbol[*numAristas].peso = grafo->matriz[padre[i]][i];
-            arbol[*numAristas].enArbol = 1;
             (*numAristas)++;
         }
     }
@@ -126,7 +126,9 @@ int compararAristas(const void* a, const void* b) {
 }
 
 Arista* kruskal(GrafoMatriz* grafo, int* numAristas) {
-    static Arista arbol[MAX_ARISTAS];
+    Arista* arbol = malloc(MAX_ARISTAS * sizeof(Arista));
+    if (!arbol) return NULL;
+    
     ConjuntoDisjunto cd;
     Arista aristas[MAX_ARISTAS];
     int totalAristas = 0;
@@ -229,8 +231,15 @@ void imprimirCamino(int* anterior, int inicio, int fin) {
 
 int** crearMatrizAdyacencia(GrafoMatriz* grafo) {
     int** matriz = (int**)malloc(grafo->numNodos * sizeof(int*));
+    if (!matriz) return NULL;
+    
     for (int i = 0; i < grafo->numNodos; i++) {
         matriz[i] = (int*)malloc(grafo->numNodos * sizeof(int));
+        if (!matriz[i]) {
+            for (int j = 0; j < i; j++) free(matriz[j]);
+            free(matriz);
+            return NULL;
+        }
         for (int j = 0; j < grafo->numNodos; j++) {
             matriz[i][j] = grafo->matriz[i][j];
         }
@@ -239,10 +248,18 @@ int** crearMatrizAdyacencia(GrafoMatriz* grafo) {
 }
 
 void liberarMatrizAdyacencia(int** matriz, int n) {
-    for (int i = 0; i < n; i++) {
-        free(matriz[i]);
+    if (matriz) {
+        for (int i = 0; i < n; i++) {
+            free(matriz[i]);
+        }
+        free(matriz);
     }
-    free(matriz);
+}
+
+void liberarAristas(Arista* aristas) {
+    if (aristas) {
+        free(aristas);
+    }
 }
 
 // ==================== ALGORITMOS ADICIONALES ====================
@@ -251,6 +268,11 @@ void encontrarCaminosCriticos(GrafoMatriz* grafo) {
     printf(COLOR_CYAN "\n=== CAMINOS CRITICOS ===\n" COLOR_RESET);
     
     int** distancias = crearMatrizAdyacencia(grafo);
+    if (!distancias) {
+        printf("Error al crear matriz de distancias\n");
+        return;
+    }
+    
     int n = grafo->numNodos;
     
     // Inicializar Floyd-Warshall
@@ -293,6 +315,8 @@ void encontrarCaminosCriticos(GrafoMatriz* grafo) {
         printf("Camino más largo: del nodo %d al nodo %d\n", 
                inicioCritico, finCritico);
         printf("Distancia: %d\n", maxDistancia);
+    } else {
+        printf("No se encontraron caminos críticos\n");
     }
     
     liberarMatrizAdyacencia(distancias, n);

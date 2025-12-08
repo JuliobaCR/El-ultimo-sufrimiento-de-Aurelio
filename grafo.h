@@ -70,5 +70,6 @@ void generarGrafoAleatorio(GrafoMatriz* grafo);
 void generarGrafoBacktracking(GrafoMatriz* grafo);
 void generarGrafoCompleto(GrafoMatriz* grafo);
 void generarGrafoCuadricula(GrafoMatriz* grafo);
+void generarGrafoConCamino(GrafoMatriz* grafo);
 
 #endif // GRAFO_H

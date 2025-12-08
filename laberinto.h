@@ -25,10 +25,10 @@ void imprimirLaberinto(Laberinto* lab);
 void imprimirLaberintoConSolucion(Laberinto* lab, int* camino, int longitud);
 
 // Funciones de generación
-void generarDesdeGrafo(Laberinto* lab, GrafoMatriz* grafo);
+void generarAleatorio(Laberinto* lab);
 void generarPerfecto(Laberinto* lab);
 void generarConBacktracking(Laberinto* lab);
-void generarAleatorio(Laberinto* lab);
+void generarDesdeGrafo(Laberinto* lab);  // Cambiado: ya no recibe grafo
 
 // Funciones de solución
 int* resolverLaberinto(Laberinto* lab, int algoritmo, int* longitud);

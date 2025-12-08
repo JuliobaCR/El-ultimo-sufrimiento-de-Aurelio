@@ -37,4 +37,7 @@ int compararAristas(const void* a, const void* b);
 int** crearMatrizAdyacencia(GrafoMatriz* grafo);
 void liberarMatrizAdyacencia(int** matriz, int n);
 
+// Función para liberar memoria de aristas (añadida)
+void liberarAristas(Arista* aristas);
+
 #endif // ALGORITMOS_H

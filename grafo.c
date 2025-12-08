@@ -9,6 +9,51 @@
 #include <string.h>
 #include "grafo.h"
 
+// ==================== GENERACION DE GRAFOS CON CAMINO ====================
+
+void generarGrafoConCamino(GrafoMatriz* grafo) {
+    srand(time(NULL));
+    
+    // Primero crear un camino principal desde el nodo 0 hasta el último
+    int numNodos = grafo->numNodos;
+    
+    // Crear camino principal (garantizado)
+    for (int i = 0; i < numNodos - 1; i++) {
+        int peso = rand() % 10 + 1;
+        agregarAristaMatriz(grafo, i, i + 1, peso);
+    }
+    
+    // Ahora agregar conexiones aleatorias para crear caminos alternativos
+    for (int i = 0; i < numNodos; i++) {
+        // Conectar con algunos vecinos aleatorios
+        for (int k = 0; k < 3; k++) { // Hasta 3 conexiones adicionales por nodo
+            int posibleVecino = i + (rand() % 5) - 2; // Vecino cerca
+            if (posibleVecino >= 0 && posibleVecino < numNodos && 
+                posibleVecino != i && grafo->matriz[i][posibleVecino] == 0) {
+                
+                // Probabilidad de conectar
+                if (rand() % 100 < 40) {
+                    int peso = rand() % 15 + 1;
+                    agregarAristaMatriz(grafo, i, posibleVecino, peso);
+                }
+            }
+        }
+    }
+    
+    // Asegurar algunas conexiones diagonales para hacer el grafo más interesante
+    for (int i = 0; i < numNodos / 4; i++) {
+        int nodo1 = rand() % numNodos;
+        int nodo2 = rand() % numNodos;
+        
+        if (nodo1 != nodo2 && grafo->matriz[nodo1][nodo2] == 0) {
+            if (rand() % 100 < 20) { // 20% de probabilidad
+                int peso = rand() % 20 + 5;
+                agregarAristaMatriz(grafo, nodo1, nodo2, peso);
+            }
+        }
+    }
+}
+
 // ==================== GRAFO CON MATRIZ ====================
 
 void inicializarGrafoMatriz(GrafoMatriz* grafo, int numNodos) {

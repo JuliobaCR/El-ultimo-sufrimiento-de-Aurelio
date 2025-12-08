@@ -216,29 +216,29 @@ void analizarLaberintoActual(Laberinto* lab) {
                 int longitud;
                 int* camino = resolverLaberinto(lab, 1, &longitud);
                 
-                if (longitud > 0) {
+                if (camino != NULL && longitud > 0) {
                     printf("\n" COLOR_VERDE "✓ Solución encontrada con Dijkstra\n" COLOR_RESET);
                     imprimirCamino(camino, 0, FILAS * COLUMNAS - 1);
                     imprimirLaberintoConSolucion(lab, camino, longitud);
                     lab->pasosSolucion = longitud - 1;
                 } else {
-                    printf("\n" COLOR_ROJO "✗ No se encontró solución\n" COLOR_RESET);
+                    printf("\n" COLOR_ROJO "✗ No se encontró solución con Dijkstra\n" COLOR_RESET);
                 }
                 pausa();
                 break;
             }
-            
+
             case 2: {
                 int longitud;
                 int* camino = resolverLaberinto(lab, 2, &longitud);
                 
-                if (longitud > 0) {
+                if (camino != NULL && longitud > 0) {
                     printf("\n" COLOR_VERDE "✓ Solución encontrada con BFS\n" COLOR_RESET);
                     imprimirCamino(camino, 0, FILAS * COLUMNAS - 1);
                     imprimirLaberintoConSolucion(lab, camino, longitud);
                     lab->pasosSolucion = longitud - 1;
                 } else {
-                    printf("\n" COLOR_ROJO "✗ No se encontró solución\n" COLOR_RESET);
+                    printf("\n" COLOR_ROJO "✗ No se encontró solución con BFS\n" COLOR_RESET);
                 }
                 pausa();
                 break;

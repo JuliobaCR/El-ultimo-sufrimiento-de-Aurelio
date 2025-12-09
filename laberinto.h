@@ -1,6 +1,6 @@
 /*
- * LABERINTO.H
- * Funciones para generación y visualización de laberintos
+ * laberinto.h
+ * Estructuras y funciones para generación y manipulación de laberintos.
  */
 
 #ifndef LABERINTO_H
@@ -8,38 +8,50 @@
 
 #include "grafo.h"
 
-// Estructura para representar un laberinto
+// ============================================================================
+// ESTRUCTURA DE LABERINTO
+// ============================================================================
+
+/*
+ * laberinto - Estructura para representar un laberinto
+ */
 typedef struct {
-    int celdas[FILAS][COLUMNAS];
-    int filas;
-    int columnas;
-    char nombre[MAX_NOMBRE];
-    int tieneSolucion;
-    int pasosSolucion;
-} Laberinto;
+    int celdas[FILAS][COLUMNAS];   // Matriz de celdas
+    int filas;                      // Número de filas
+    int columnas;                   // Número de columnas
+    char nombre[MAX_NOMBRE];        // Nombre del laberinto
+    int tiene_solucion;             // 1 si tiene solución
+    int pasos_solucion;             // Pasos en solución óptima
+} laberinto;
 
-// Funciones principales
-Laberinto* crearLaberintoSegunTipo(int tipoGeneracion, const char* nombre);
-void destruirLaberinto(Laberinto* lab);
-void imprimirLaberinto(Laberinto* lab);
-void imprimirLaberintoConSolucion(Laberinto* lab, int* camino, int longitud);
+// ============================================================================
+// PROTOTIPOS DE FUNCIONES
+// ============================================================================
 
-// Funciones de generación
-void generarAleatorio(Laberinto* lab);
-void generarPerfecto(Laberinto* lab);
-void generarConBacktracking(Laberinto* lab);
-void generarDesdeGrafo(Laberinto* lab);  // Cambiado: ya no recibe grafo
+/* Creación y destrucción */
+laberinto* crear_laberinto_segun_tipo(int tipo_generacion, const char* nombre);
+void destruir_laberinto(laberinto* lab);
 
-// Funciones de solución
-int* resolverLaberinto(Laberinto* lab, int algoritmo, int* longitud);
-int verificarSolucion(Laberinto* lab);
-int contarCaminosPosibles(Laberinto* lab);
+/* Visualización */
+void imprimir_laberinto(laberinto* lab);
+void imprimir_laberinto_con_solucion(laberinto* lab, int* camino, int longitud);
 
-// Funciones auxiliares
-int obtenerNombreAleatorio(char* buffer);
-void convertirCoordenadas(int nodo, int* fila, int* columna);
-int convertirANodo(int fila, int columna);
-int esValida(int fila, int columna);
-void animarSolucion(Laberinto* lab, int* camino, int longitud);
+/* Generación de laberintos */
+void generar_aleatorio(laberinto* lab);
+void generar_perfecto(laberinto* lab);
+void generar_con_backtracking(laberinto* lab);
+void generar_desde_grafo(laberinto* lab);
+
+/* Resolución y análisis */
+int* resolver_laberinto(laberinto* lab, int algoritmo, int* longitud);
+int verificar_solucion(laberinto* lab);
+int contar_caminos_posibles(laberinto* lab);
+
+/* Funciones auxiliares */
+int obtener_nombre_aleatorio(char* buffer);
+void convertir_coordenadas(int nodo, int* fila, int* columna);
+int convertir_a_nodo(int fila, int columna);
+int es_valida(int fila, int columna);
+void animar_solucion(laberinto* lab, int* camino, int longitud);
 
 #endif // LABERINTO_H

@@ -1,6 +1,7 @@
 /*
- * ARCHIVOS.C
- * Implementación de manejo de archivos
+ * archivos.c
+ * Funciones para manejo de archivos de laberintos.
+ * Permite guardar, cargar y exportar laberintos.
  */
 
 #include <stdio.h>
@@ -14,159 +15,179 @@
 
 // ==================== FUNCIONES PRINCIPALES ====================
 
-int guardarLaberinto(Laberinto* lab, const char* nombreArchivo) {
-    FILE* archivo;
-    char nombreCompleto[MAX_NOMBRE + 50];
+/*
+ * guardar_laberinto
+ * Guarda un laberinto en archivo de texto.
+ * Crea directorio si no existe y formatea datos.
+ */
+int guardar_laberinto(laberinto* lab, const char* nombre_archivo) {
+    FILE* archivo;                         // Puntero a archivo
+    char nombre_completo[MAX_NOMBRE + 50]; // Nombre completo con ruta
     
-    // Crear directorio si no existe
-    crearDirectorioLaberintos();
+    crear_directorio_laberintos();  // Asegura que exista directorio
     
-    // Generar nombre completo
-    if (nombreArchivo == NULL) {
-        sprintf(nombreCompleto, "%s%s.txt", DIRECTORIO_LABERINTOS, lab->nombre);
+    // Construye nombre completo del archivo
+    if (nombre_archivo == NULL) {
+        // Nombre por defecto (nombre del laberinto)
+        sprintf(nombre_completo, "%s%s.txt", DIRECTORIO_LABERINTOS, lab->nombre);
     } else {
-        sprintf(nombreCompleto, "%s%s", DIRECTORIO_LABERINTOS, nombreArchivo);
-        if (strstr(nombreArchivo, ".txt") == NULL) {
-            strcat(nombreCompleto, ".txt");
+        // Nombre personalizado
+        sprintf(nombre_completo, "%s%s", DIRECTORIO_LABERINTOS, nombre_archivo);
+        if (strstr(nombre_archivo, ".txt") == NULL) {
+            strcat(nombre_completo, ".txt");  // Añade extensión si falta
         }
     }
     
-    // Abrir archivo
-    archivo = fopen(nombreCompleto, "w");
+    // Abre archivo para escritura
+    archivo = fopen(nombre_completo, "w");
     if (archivo == NULL) {
-        printf("Error: No se pudo crear el archivo %s\n", nombreCompleto);
-        return 0;
+        printf("Error: No se pudo crear el archivo %s\n", nombre_completo);
+        return 0;  // Error
     }
     
-    // Escribir metadatos
-    fprintf(archivo, "# LABERINTO ANARQUICO\n");
+    // Escribe metadatos
+    fprintf(archivo, "# LABERINTO ANÁRQUICO\n");
     fprintf(archivo, "NOMBRE: %s\n", lab->nombre);
     fprintf(archivo, "FILAS: %d\n", lab->filas);
     fprintf(archivo, "COLUMNAS: %d\n", lab->columnas);
-    fprintf(archivo, "TIENE_SOLUCION: %d\n", lab->tieneSolucion);
-    fprintf(archivo, "PASOS_SOLUCION: %d\n", lab->pasosSolucion);
+    fprintf(archivo, "TIENE_SOLUCION: %d\n", lab->tiene_solucion);
+    fprintf(archivo, "PASOS_SOLUCION: %d\n", lab->pasos_solucion);
     fprintf(archivo, "DATA:\n");
     
-    // Escribir laberinto
+    // Escribe matriz del laberinto
     for (int i = 0; i < lab->filas; i++) {
         for (int j = 0; j < lab->columnas; j++) {
-            fprintf(archivo, "%d", lab->celdas[i][j]);
+            fprintf(archivo, "%d", lab->celdas[i][j]);  // Valor de celda
             if (j < lab->columnas - 1) {
-                fprintf(archivo, " ");
+                fprintf(archivo, " ");  // Espacio entre valores
             }
         }
-        fprintf(archivo, "\n");
+        fprintf(archivo, "\n");  // Nueva línea por fila
     }
     
-    fclose(archivo);
-    printf("Laberinto guardado en: %s\n", nombreCompleto);
-    return 1;
+    fclose(archivo);  // Cierra archivo
+    printf("Laberinto guardado en: %s\n", nombre_completo);
+    return 1;  // Éxito
 }
 
-Laberinto* cargarLaberinto(const char* nombreArchivo) {
-    FILE* archivo;
-    char nombreCompleto[MAX_NOMBRE + 50];
-    char linea[MAX_LINEA];
-    Laberinto* lab = NULL;
+/*
+ * cargar_laberinto
+ * Carga un laberinto desde archivo de texto.
+ * Verifica formato y estructura del archivo.
+ */
+laberinto* cargar_laberinto(const char* nombre_archivo) {
+    FILE* archivo;                         // Puntero a archivo
+    char nombre_completo[MAX_NOMBRE + 50]; // Nombre completo con ruta
+    char linea[MAX_LINEA];                 // Buffer para línea
+    laberinto* lab = NULL;                 // Laberinto a cargar
     
-    // Construir nombre completo
-    sprintf(nombreCompleto, "%s%s", DIRECTORIO_LABERINTOS, nombreArchivo);
-    if (strstr(nombreArchivo, ".txt") == NULL) {
-        strcat(nombreCompleto, ".txt");
+    // Construye nombre completo
+    sprintf(nombre_completo, "%s%s", DIRECTORIO_LABERINTOS, nombre_archivo);
+    if (strstr(nombre_archivo, ".txt") == NULL) {
+        strcat(nombre_completo, ".txt");  // Añade extensión si falta
     }
     
-    // Verificar si existe
-    if (!existeLaberinto(nombreArchivo)) {
-        printf("Error: El archivo %s no existe\n", nombreCompleto);
+    // Verifica si el archivo existe
+    if (!existe_laberinto(nombre_archivo)) {
+        printf("Error: El archivo %s no existe\n", nombre_completo);
         return NULL;
     }
     
-    // Abrir archivo
-    archivo = fopen(nombreCompleto, "r");
+    // Abre archivo para lectura
+    archivo = fopen(nombre_completo, "r");
     if (archivo == NULL) {
-        printf("Error: No se pudo abrir el archivo %s\n", nombreCompleto);
+        printf("Error: No se pudo abrir el archivo %s\n", nombre_completo);
         return NULL;
     }
     
-    // Crear laberinto
-    lab = (Laberinto*)malloc(sizeof(Laberinto));
+    // Asigna memoria para laberinto
+    lab = (laberinto*)malloc(sizeof(laberinto));
     if (!lab) {
         fclose(archivo);
         return NULL;
     }
     
-    // Leer metadatos
-    int leyendoData = 0;
-    int filaActual = 0;
+    int leyendo_data = 0;  // Flag para sección DATA
+    int fila_actual = 0;   // Fila actual en lectura
     
+    // Lee archivo línea por línea
     while (fgets(linea, MAX_LINEA, archivo)) {
-        // Eliminar salto de línea
-        linea[strcspn(linea, "\n")] = 0;
+        linea[strcspn(linea, "\n")] = 0;  // Elimina salto de línea
         
         if (strstr(linea, "DATA:") != NULL) {
-            leyendoData = 1;
+            leyendo_data = 1;  // Comienza sección DATA
             continue;
         }
         
-        if (!leyendoData) {
-            // Parsear metadatos
+        if (!leyendo_data) {
+            // Parsea metadatos
             if (strstr(linea, "NOMBRE:") != NULL) {
-                strcpy(lab->nombre, linea + 8);
+                strcpy(lab->nombre, linea + 8);  // Copia nombre
             } else if (strstr(linea, "FILAS:") != NULL) {
-                lab->filas = atoi(linea + 6);
+                lab->filas = atoi(linea + 6);  // Convierte a entero
             } else if (strstr(linea, "COLUMNAS:") != NULL) {
-                lab->columnas = atoi(linea + 9);
+                lab->columnas = atoi(linea + 9);  // Convierte a entero
             } else if (strstr(linea, "TIENE_SOLUCION:") != NULL) {
-                lab->tieneSolucion = atoi(linea + 15);
+                lab->tiene_solucion = atoi(linea + 15);  // Convierte a entero
             } else if (strstr(linea, "PASOS_SOLUCION:") != NULL) {
-                lab->pasosSolucion = atoi(linea + 15);
+                lab->pasos_solucion = atoi(linea + 15);  // Convierte a entero
             }
-        } else if (filaActual < lab->filas) {
-            // Leer datos del laberinto
-            char* token = strtok(linea, " ");
-            int columna = 0;
+        } else if (fila_actual < lab->filas) {
+            // Lee datos del laberinto
+            char* token = strtok(linea, " ");  // Primer token
+            int columna = 0;  // Columna actual
             
             while (token != NULL && columna < lab->columnas) {
-                lab->celdas[filaActual][columna] = atoi(token);
-                token = strtok(NULL, " ");
-                columna++;
+                lab->celdas[fila_actual][columna] = atoi(token);  // Convierte a entero
+                token = strtok(NULL, " ");  // Siguiente token
+                columna++;  // Incrementa columna
             }
-            filaActual++;
+            fila_actual++;  // Incrementa fila
         }
     }
     
-    fclose(archivo);
+    fclose(archivo);  // Cierra archivo
     
-    // Verificar integridad
-    if (filaActual != lab->filas) {
+    // Verifica integridad del archivo
+    if (fila_actual != lab->filas) {
         printf("Error: Archivo corrupto o incompleto\n");
-        free(lab);
+        free(lab);  // Libera memoria
         return NULL;
     }
     
     printf("Laberinto cargado exitosamente: %s\n", lab->nombre);
-    return lab;
+    return lab;  // Retorna laberinto cargado
 }
 
-int existeLaberinto(const char* nombreArchivo) {
-    char nombreCompleto[MAX_NOMBRE + 50];
-    struct stat buffer;
+/*
+ * existe_laberinto
+ * Verifica si un archivo de laberinto existe.
+ * Usa stat() para verificar existencia.
+ */
+int existe_laberinto(const char* nombre_archivo) {
+    char nombre_completo[MAX_NOMBRE + 50];  // Nombre completo con ruta
+    struct stat buffer;                     // Estructura para stat
     
-    sprintf(nombreCompleto, "%s%s", DIRECTORIO_LABERINTOS, nombreArchivo);
-    if (strstr(nombreArchivo, ".txt") == NULL) {
-        strcat(nombreCompleto, ".txt");
+    sprintf(nombre_completo, "%s%s", DIRECTORIO_LABERINTOS, nombre_archivo);
+    if (strstr(nombre_archivo, ".txt") == NULL) {
+        strcat(nombre_completo, ".txt");  // Añade extensión si falta
     }
     
-    return (stat(nombreCompleto, &buffer) == 0);
+    // Retorna 1 si existe, 0 si no
+    return (stat(nombre_completo, &buffer) == 0);
 }
 
-void listarLaberintosGuardados() {
-    DIR* directorio;
-    struct dirent* entrada;
-    int contador = 0;
+/*
+ * listar_laberintos_guardados
+ * Muestra lista de laberintos guardados en directorio.
+ * Filtra archivos .txt y muestra nombres sin extensión.
+ */
+void listar_laberintos_guardados(void) {
+    DIR* directorio;                // Puntero a directorio
+    struct dirent* entrada;         // Entrada de directorio
+    int contador = 0;               // Contador de archivos
     
-    // Crear directorio si no existe
-    crearDirectorioLaberintos();
+    crear_directorio_laberintos();  // Asegura que exista directorio
     
     directorio = opendir(DIRECTORIO_LABERINTOS);
     if (directorio == NULL) {
@@ -176,13 +197,16 @@ void listarLaberintosGuardados() {
     
     printf(COLOR_CYAN "\n=== LABERINTOS GUARDADOS ===\n" COLOR_RESET);
     
+    // Lee todas las entradas del directorio
     while ((entrada = readdir(directorio)) != NULL) {
-        if (strstr(entrada->d_name, ".txt") != NULL) {
-            char nombreSinExt[MAX_NOMBRE];
-            strncpy(nombreSinExt, entrada->d_name, strlen(entrada->d_name) - 4);
-            nombreSinExt[strlen(entrada->d_name) - 4] = '\0';
+        if (strstr(entrada->d_name, ".txt") != NULL) {  // Solo archivos .txt
+            char nombre_sin_ext[MAX_NOMBRE];  // Buffer para nombre sin extensión
             
-            printf("%d. %s\n", ++contador, nombreSinExt);
+            // Copia nombre sin extensión .txt
+            strncpy(nombre_sin_ext, entrada->d_name, strlen(entrada->d_name) - 4);
+            nombre_sin_ext[strlen(entrada->d_name) - 4] = '\0';  // Terminación
+            
+            printf("%d. %s\n", ++contador, nombre_sin_ext);  // Muestra con número
         }
     }
     
@@ -192,36 +216,47 @@ void listarLaberintosGuardados() {
         printf("\nTotal: %d laberintos\n", contador);
     }
     
-    closedir(directorio);
+    closedir(directorio);  // Cierra directorio
 }
 
-int eliminarLaberinto(const char* nombreArchivo) {
-    char nombreCompleto[MAX_NOMBRE + 50];
+/*
+ * eliminar_laberinto
+ * Elimina un archivo de laberinto.
+ * Pide confirmación antes de eliminar.
+ */
+int eliminar_laberinto(const char* nombre_archivo) {
+    char nombre_completo[MAX_NOMBRE + 50];  // Nombre completo con ruta
     
-    sprintf(nombreCompleto, "%s%s", DIRECTORIO_LABERINTOS, nombreArchivo);
-    if (strstr(nombreArchivo, ".txt") == NULL) {
-        strcat(nombreCompleto, ".txt");
+    sprintf(nombre_completo, "%s%s", DIRECTORIO_LABERINTOS, nombre_archivo);
+    if (strstr(nombre_archivo, ".txt") == NULL) {
+        strcat(nombre_completo, ".txt");  // Añade extensión si falta
     }
     
-    if (remove(nombreCompleto) == 0) {
-        printf("Laberinto eliminado: %s\n", nombreArchivo);
-        return 1;
+    // Intenta eliminar archivo
+    if (remove(nombre_completo) == 0) {
+        printf("Laberinto eliminado: %s\n", nombre_archivo);
+        return 1;  // Éxito
     } else {
-        printf("Error al eliminar el laberinto: %s\n", nombreArchivo);
-        return 0;
+        printf("Error al eliminar el laberinto: %s\n", nombre_archivo);
+        return 0;  // Error
     }
 }
 
-// ==================== EXPORTACION ====================
+// ==================== EXPORTACIÓN ====================
 
-void exportarLaberintoSVG(Laberinto* lab, const char* nombreArchivo) {
-    FILE* archivo;
-    char nombreCompleto[MAX_NOMBRE + 50];
-    int tamCelda = 20;
+/*
+ * exportar_laberinto_svg
+ * Exporta laberinto a formato SVG (vectorial).
+ * Crea imagen escalable con colores definidos.
+ */
+void exportar_laberinto_svg(laberinto* lab, const char* nombre_archivo) {
+    FILE* archivo;                         // Puntero a archivo
+    char nombre_completo[MAX_NOMBRE + 50]; // Nombre completo con ruta
+    int tam_celda = 20;                    // Tamaño de celda en píxeles
     
-    sprintf(nombreCompleto, "%s%s.svg", DIRECTORIO_LABERINTOS, nombreArchivo);
+    sprintf(nombre_completo, "%s%s.svg", DIRECTORIO_LABERINTOS, nombre_archivo);
     
-    archivo = fopen(nombreCompleto, "w");
+    archivo = fopen(nombre_completo, "w");
     if (archivo == NULL) {
         printf("Error al crear archivo SVG\n");
         return;
@@ -230,138 +265,159 @@ void exportarLaberintoSVG(Laberinto* lab, const char* nombreArchivo) {
     // Encabezado SVG
     fprintf(archivo, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     fprintf(archivo, "<svg width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\">\n",
-            lab->columnas * tamCelda + 10, lab->filas * tamCelda + 10);
+            lab->columnas * tam_celda + 10, lab->filas * tam_celda + 10);
     
     // Fondo
     fprintf(archivo, "<rect x=\"0\" y=\"0\" width=\"%d\" height=\"%d\" fill=\"#f0f0f0\"/>\n",
-            lab->columnas * tamCelda + 10, lab->filas * tamCelda + 10);
+            lab->columnas * tam_celda + 10, lab->filas * tam_celda + 10);
     
-    // Dibujar laberinto
+    // Dibuja cada celda del laberinto
     for (int i = 0; i < lab->filas; i++) {
         for (int j = 0; j < lab->columnas; j++) {
-            int x = j * tamCelda + 5;
-            int y = i * tamCelda + 5;
+            int x = j * tam_celda + 5;  // Posición X
+            int y = i * tam_celda + 5;  // Posición Y
             
+            // Color según tipo de celda
             switch (lab->celdas[i][j]) {
                 case PARED:
                     fprintf(archivo, "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" fill=\"#333333\"/>\n",
-                            x, y, tamCelda, tamCelda);
+                            x, y, tam_celda, tam_celda);
                     break;
                 case CAMINO:
                     fprintf(archivo, "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" fill=\"#ffffff\"/>\n",
-                            x, y, tamCelda, tamCelda);
+                            x, y, tam_celda, tam_celda);
                     break;
                 case INICIO:
                     fprintf(archivo, "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" fill=\"#4CAF50\"/>\n",
-                            x, y, tamCelda, tamCelda);
+                            x, y, tam_celda, tam_celda);
                     fprintf(archivo, "<text x=\"%d\" y=\"%d\" font-size=\"12\" text-anchor=\"middle\" dy=\".3em\">E</text>\n",
-                            x + tamCelda/2, y + tamCelda/2);
+                            x + tam_celda/2, y + tam_celda/2);
                     break;
                 case FINAL:
                     fprintf(archivo, "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" fill=\"#F44336\"/>\n",
-                            x, y, tamCelda, tamCelda);
+                            x, y, tam_celda, tam_celda);
                     fprintf(archivo, "<text x=\"%d\" y=\"%d\" font-size=\"12\" text-anchor=\"middle\" dy=\".3em\">S</text>\n",
-                            x + tamCelda/2, y + tamCelda/2);
+                            x + tam_celda/2, y + tam_celda/2);
                     break;
             }
             
-            // Bordes
+            // Borde de celda
             fprintf(archivo, "<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" fill=\"none\" stroke=\"#cccccc\" stroke-width=\"1\"/>\n",
-                    x, y, tamCelda, tamCelda);
+                    x, y, tam_celda, tam_celda);
         }
     }
     
-    fprintf(archivo, "</svg>\n");
-    fclose(archivo);
+    fprintf(archivo, "</svg>\n");  // Cierra SVG
+    fclose(archivo);               // Cierra archivo
     
-    printf("Laberinto exportado a SVG: %s\n", nombreCompleto);
+    printf("Laberinto exportado a SVG: %s\n", nombre_completo);
 }
 
-void exportarEstadisticas(Laberinto* lab, const char* nombreArchivo) {
-    FILE* archivo;
-    char nombreCompleto[MAX_NOMBRE + 50];
+/*
+ * exportar_estadisticas
+ * Exporta estadísticas del laberinto a archivo de texto.
+ * Incluye medidas, porcentajes y fecha de generación.
+ */
+void exportar_estadisticas(laberinto* lab, const char* nombre_archivo) {
+    FILE* archivo;                         // Puntero a archivo
+    char nombre_completo[MAX_NOMBRE + 50]; // Nombre completo con ruta
     
-    sprintf(nombreCompleto, "%s%s_estadisticas.txt", DIRECTORIO_LABERINTOS, nombreArchivo);
+    sprintf(nombre_completo, "%s%s_estadisticas.txt", DIRECTORIO_LABERINTOS, nombre_archivo);
     
-    archivo = fopen(nombreCompleto, "w");
+    archivo = fopen(nombre_completo, "w");
     if (archivo == NULL) {
         printf("Error al crear archivo de estadísticas\n");
         return;
     }
     
-    // Calcular estadísticas
+    // Calcula estadísticas
     int paredes = 0, caminos = 0;
     for (int i = 0; i < lab->filas; i++) {
         for (int j = 0; j < lab->columnas; j++) {
             if (lab->celdas[i][j] == PARED) {
-                paredes++;
+                paredes++;  // Incrementa contador de paredes
             } else {
-                caminos++;
+                caminos++;  // Incrementa contador de caminos
             }
         }
     }
     
-    float porcentajeCaminos = (float)caminos * 100 / (lab->filas * lab->columnas);
+    float porcentaje_caminos = (float)caminos * 100 / (lab->filas * lab->columnas);
     
-    // Escribir estadísticas
+    // Escribe estadísticas
     fprintf(archivo, "ESTADÍSTICAS DEL LABERINTO: %s\n", lab->nombre);
     fprintf(archivo, "================================\n\n");
     fprintf(archivo, "Tamaño: %d x %d\n", lab->filas, lab->columnas);
     fprintf(archivo, "Total de celdas: %d\n", lab->filas * lab->columnas);
-    fprintf(archivo, "Paredes: %d (%.1f%%)\n", paredes, 100 - porcentajeCaminos);
-    fprintf(archivo, "Caminos: %d (%.1f%%)\n", caminos, porcentajeCaminos);
-    fprintf(archivo, "Tiene solución: %s\n", lab->tieneSolucion ? "Sí" : "No");
-    fprintf(archivo, "Pasos en solución: %d\n", lab->pasosSolucion);
+    fprintf(archivo, "Paredes: %d (%.1f%%)\n", paredes, 100 - porcentaje_caminos);
+    fprintf(archivo, "Caminos: %d (%.1f%%)\n", caminos, porcentaje_caminos);
+    fprintf(archivo, "Tiene solución: %s\n", lab->tiene_solucion ? "Sí" : "No");
+    fprintf(archivo, "Pasos en solución: %d\n", lab->pasos_solucion);
     fprintf(archivo, "Fecha de generación: %s", ctime(&(time_t){time(NULL)}));
     
-    fclose(archivo);
-    printf("Estadísticas exportadas: %s\n", nombreCompleto);
+    fclose(archivo);  // Cierra archivo
+    printf("Estadísticas exportadas: %s\n", nombre_completo);
 }
 
 // ==================== FUNCIONES AUXILIARES ====================
 
-void crearDirectorioLaberintos() {
-    struct stat st = {0};
+/*
+ * crear_directorio_laberintos
+ * Crea directorio para laberintos si no existe.
+ * Usa permisos 0700 (solo propietario).
+ */
+void crear_directorio_laberintos(void) {
+    struct stat st = {0};  // Estructura para stat
     
     if (stat(DIRECTORIO_LABERINTOS, &st) == -1) {
-        mkdir(DIRECTORIO_LABERINTOS, 0700);
+        mkdir(DIRECTORIO_LABERINTOS, 0700);  // Crea directorio
     }
 }
 
-char* generarNombreArchivo(const char* nombreLaberinto) {
-    static char nombreArchivo[MAX_NOMBRE + 50];
-    time_t ahora = time(NULL);
-    struct tm* t = localtime(&ahora);
+/*
+ * generar_nombre_archivo
+ * Genera nombre de archivo con timestamp.
+ * Formato: nombre_YYYYMMDD_HHMMSS
+ */
+char* generar_nombre_archivo(const char* nombre_laberinto) {
+    static char nombre_archivo[MAX_NOMBRE + 50];  // Buffer estático
+    time_t ahora = time(NULL);                    // Tiempo actual
+    struct tm* t = localtime(&ahora);             // Convierte a tiempo local
     
-    sprintf(nombreArchivo, "%s_%04d%02d%02d_%02d%02d%02d",
-            nombreLaberinto,
+    sprintf(nombre_archivo, "%s_%04d%02d%02d_%02d%02d%02d",
+            nombre_laberinto,
             t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
             t->tm_hour, t->tm_min, t->tm_sec);
     
-    return nombreArchivo;
+    return nombre_archivo;  // Retorna nombre generado
 }
 
-int validarArchivoLaberinto(const char* nombreArchivo) {
-    FILE* archivo;
-    char nombreCompleto[MAX_NOMBRE + 50];
+/*
+ * validar_archivo_laberinto
+ * Verifica formato básico de archivo de laberinto.
+ * Comprueba existencia de secciones esenciales.
+ */
+int validar_archivo_laberinto(const char* nombre_archivo) {
+    FILE* archivo;                         // Puntero a archivo
+    char nombre_completo[MAX_NOMBRE + 50]; // Nombre completo con ruta
     
-    sprintf(nombreCompleto, "%s%s", DIRECTORIO_LABERINTOS, nombreArchivo);
+    sprintf(nombre_completo, "%s%s", DIRECTORIO_LABERINTOS, nombre_archivo);
     
-    archivo = fopen(nombreCompleto, "r");
+    archivo = fopen(nombre_completo, "r");
     if (archivo == NULL) {
-        return 0;
+        return 0;  // No se pudo abrir
     }
     
-    // Verificar si tiene el formato correcto
-    char linea[MAX_LINEA];
-    int tieneData = 0, tieneNombre = 0;
+    char linea[MAX_LINEA];          // Buffer para línea
+    int tiene_data = 0, tiene_nombre = 0;  // Flags para secciones
     
+    // Lee archivo buscando secciones esenciales
     while (fgets(linea, MAX_LINEA, archivo)) {
-        if (strstr(linea, "NOMBRE:") != NULL) tieneNombre = 1;
-        if (strstr(linea, "DATA:") != NULL) tieneData = 1;
+        if (strstr(linea, "NOMBRE:") != NULL) tiene_nombre = 1;
+        if (strstr(linea, "DATA:") != NULL) tiene_data = 1;
     }
     
-    fclose(archivo);
+    fclose(archivo);  // Cierra archivo
     
-    return (tieneNombre && tieneData);
+    return (tiene_nombre && tiene_data);  // Válido si tiene ambas secciones
 }

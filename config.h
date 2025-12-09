@@ -1,12 +1,13 @@
 /*
- * CONFIG.H
- * Configuraciones del sistema de laberintos
+ * config.h
+ * Configuraciones globales del sistema de laberintos.
+ * Define constantes para tamaño, colores y parámetros.
  */
 
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// Configuración del tamaño del laberinto
+// Tamaño del laberinto
 #define FILAS 15
 #define COLUMNAS 15
 #define MAX_NODOS (FILAS * COLUMNAS)
@@ -25,7 +26,7 @@
 #define PROBABILIDAD_DIAGONAL 20
 #define MAX_INTENTOS_BACKTRACKING 1000
 
-// Colores para terminal (códigos ANSI)
+// Colores para terminal (ANSI)
 #define COLOR_RESET   "\x1b[0m"
 #define COLOR_ROJO    "\x1b[31m"
 #define COLOR_VERDE   "\x1b[32m"
@@ -45,4 +46,4 @@
 #define VISITADO 4
 #define SOLUCION 5
 
-#endif // CONFIG_H
+#endif

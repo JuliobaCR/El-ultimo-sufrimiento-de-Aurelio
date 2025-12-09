@@ -1,6 +1,6 @@
 /*
- * GRAFO.H
- * Definiciones de estructuras de grafos y funciones
+ * grafo.h
+ * Definiciones de estructuras y operaciones de grafos.
  */
 
 #ifndef GRAFO_H
@@ -8,68 +8,76 @@
 
 #include "config.h"
 
-// Estructura para una arista
+// ============================================================================
+// DEFINICIONES DE ESTRUCTURAS
+// ============================================================================
+
+/* arista - Estructura para representar una arista */
 typedef struct {
-    int origen;
-    int destino;
-    int peso;
-} Arista;
+    int origen;     // Nodo origen
+    int destino;    // Nodo destino
+    int peso;       // Peso de la arista
+} arista;
 
-// Estructura para un nodo en lista de adyacencia
-typedef struct NodoLista {
-    int destino;
-    int peso;
-    struct NodoLista* siguiente;
-} NodoLista;
+/* nodo_lista - Estructura para un nodo en lista de adyacencia */
+typedef struct nodo_lista {
+    int destino;                    // Nodo destino
+    int peso;                       // Peso de la arista
+    struct nodo_lista* siguiente;   // Siguiente en la lista
+} nodo_lista;
 
-// Estructura para grafo con matriz de adyacencia
+/* grafo_matriz - Estructura para grafo con matriz de adyacencia */
 typedef struct {
-    int matriz[MAX_NODOS][MAX_NODOS];
-    int numNodos;
-} GrafoMatriz;
+    int matriz[MAX_NODOS][MAX_NODOS];   // Matriz de pesos
+    int num_nodos;                      // Número total de nodos
+} grafo_matriz;
 
-// Estructura para grafo con lista de adyacencia
+/* grafo_lista - Estructura para grafo con lista de adyacencia */
 typedef struct {
-    NodoLista* lista[MAX_NODOS];
-    int numNodos;
-} GrafoLista;
+    nodo_lista* lista[MAX_NODOS];   // Array de listas
+    int num_nodos;                  // Número total de nodos
+} grafo_lista;
 
-// Estructura para conjunto disjunto (Union-Find)
+/* conjunto_disjunto - Estructura para algoritmo Union-Find */
 typedef struct {
-    int padre[MAX_NODOS];
-    int rango[MAX_NODOS];
-} ConjuntoDisjunto;
+    int padre[MAX_NODOS];   // Padre de cada elemento
+    int rango[MAX_NODOS];   // Rango para optimización
+} conjunto_disjunto;
 
-// Funciones de grafo matriz
-void inicializarGrafoMatriz(GrafoMatriz* grafo, int numNodos);
-void agregarAristaMatriz(GrafoMatriz* grafo, int origen, int destino, int peso);
-void eliminarAristaMatriz(GrafoMatriz* grafo, int origen, int destino);
-int obtenerPesoMatriz(GrafoMatriz* grafo, int origen, int destino);
-void imprimirMatrizAdyacencia(GrafoMatriz* grafo);
-void liberarGrafoMatriz(GrafoMatriz* grafo);
+// ============================================================================
+// PROTOTIPOS DE FUNCIONES
+// ============================================================================
 
-// Funciones de grafo lista
-void inicializarGrafoLista(GrafoLista* grafo, int numNodos);
-void agregarAristaLista(GrafoLista* grafo, int origen, int destino, int peso);
-void eliminarAristaLista(GrafoLista* grafo, int origen, int destino);
-int obtenerPesoLista(GrafoLista* grafo, int origen, int destino);
-void imprimirListaAdyacencia(GrafoLista* grafo);
-void liberarGrafoLista(GrafoLista* grafo);
+/* Funciones para grafo matriz */
+void inicializar_grafo_matriz(grafo_matriz* grafo, int num_nodos);
+void agregar_arista_matriz(grafo_matriz* grafo, int origen, int destino, int peso);
+void eliminar_arista_matriz(grafo_matriz* grafo, int origen, int destino);
+int obtener_peso_matriz(grafo_matriz* grafo, int origen, int destino);
+void imprimir_matriz_adyacencia(grafo_matriz* grafo);
+void liberar_grafo_matriz(grafo_matriz* grafo);
 
-// Funciones de conjunto disjunto
-void hacerConjunto(ConjuntoDisjunto* cd, int x);
-int encontrar(ConjuntoDisjunto* cd, int x);
-void unir(ConjuntoDisjunto* cd, int x, int y);
+/* Funciones para grafo lista */
+void inicializar_grafo_lista(grafo_lista* grafo, int num_nodos);
+void agregar_arista_lista(grafo_lista* grafo, int origen, int destino, int peso);
+void eliminar_arista_lista(grafo_lista* grafo, int origen, int destino);
+int obtener_peso_lista(grafo_lista* grafo, int origen, int destino);
+void imprimir_lista_adyacencia(grafo_lista* grafo);
+void liberar_grafo_lista(grafo_lista* grafo);
 
-// Funciones de conversión
-void matrizALista(GrafoMatriz* origen, GrafoLista* destino);
-void listaAMatriz(GrafoLista* origen, GrafoMatriz* destino);
+/* Funciones para conjuntos disjuntos */
+void hacer_conjunto(conjunto_disjunto* cd, int x);
+int encontrar(conjunto_disjunto* cd, int x);
+void unir(conjunto_disjunto* cd, int x, int y);
 
-// Funciones de generación
-void generarGrafoAleatorio(GrafoMatriz* grafo);
-void generarGrafoBacktracking(GrafoMatriz* grafo);
-void generarGrafoCompleto(GrafoMatriz* grafo);
-void generarGrafoCuadricula(GrafoMatriz* grafo);
-void generarGrafoConCamino(GrafoMatriz* grafo);
+/* Conversiones entre representaciones */
+void matriz_a_lista(grafo_matriz* origen, grafo_lista* destino);
+void lista_a_matriz(grafo_lista* origen, grafo_matriz* destino);
+
+/* Generación de grafos */
+void generar_grafo_aleatorio(grafo_matriz* grafo);
+void generar_grafo_backtracking(grafo_matriz* grafo);
+void generar_grafo_completo(grafo_matriz* grafo);
+void generar_grafo_cuadricula(grafo_matriz* grafo);
+void generar_grafo_con_camino(grafo_matriz* grafo);
 
 #endif // GRAFO_H

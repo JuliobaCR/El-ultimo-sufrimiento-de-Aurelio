@@ -1,6 +1,7 @@
 /*
- * MAIN.C
- * Programa principal - Generador de Laberintos Anárquicos
+ * main.c
+ * Programa principal con sistema de menús.
+ * Coordina todas las funcionalidades del proyecto.
  */
 
 #include <stdio.h>
@@ -15,92 +16,73 @@
 #include "memes.h"
 
 // Prototipos de funciones
-void mostrarMenuPrincipal();
-void limpiarPantalla();
-void pausa();
-void generarNuevoLaberinto();
-void analizarLaberintoActual(Laberinto* lab);
-void demostrarAlgoritmos();
-void cargarLaberintoExistente();
-void manejarArchivos();
+void mostrar_menu_principal(void);
+void limpiar_pantalla(void);
+void pausa(void);
+void generar_nuevo_laberinto(void);
+void analizar_laberinto_actual(laberinto* lab);
+void demostrar_algoritmos(void);
+void cargar_laberinto_existente(void);
+void manejar_archivos(void);
+void mostrar_informacion_sistema(void);
 
 // Variables globales
-Laberinto* laberintoActual = NULL;
+laberinto* laberinto_actual = NULL;
 
-int main() {
-    srand(time(NULL));
-    int opcion;
+int main(void) {
+    srand(time(NULL));    // Inicializa generador aleatorio
+    int opcion;           // Opción del menú
     
     do {
-        limpiarPantalla();
-        mostrarMenuPrincipal();
+        limpiar_pantalla();          // Limpia pantalla
+        mostrar_menu_principal();    // Muestra menú
+        
         printf("\nSeleccione una opción: ");
-        scanf("%d", &opcion);
-        getchar(); // Limpiar buffer
+        scanf("%d", &opcion);        // Lee opción
+        getchar();                   // Limpia buffer
         
         switch (opcion) {
-            case 1:
-                generarNuevoLaberinto();
-                break;
-            case 2:
-                if (laberintoActual != NULL) {
-                    analizarLaberintoActual(laberintoActual);
+            case 1: generar_nuevo_laberinto(); break;
+            case 2: 
+                if (laberinto_actual != NULL) {
+                    analizar_laberinto_actual(laberinto_actual);
                 } else {
-                    printf("\n" COLOR_ROJO "No hay laberinto cargado. Genere o cargue uno primero.\n" COLOR_RESET);
+                    printf("\n" COLOR_ROJO "No hay laberinto cargado.\n" COLOR_RESET);
                     pausa();
                 }
                 break;
-            case 3:
-                demostrarAlgoritmos();
-                break;
-            case 4:
-                cargarLaberintoExistente();
-                break;
-            case 5:
-                manejarArchivos();
-                break;
-            case 6:
-                if (laberintoActual != NULL) {
-                    imprimirLaberinto(laberintoActual);
+            case 3: demostrar_algoritmos(); break;
+            case 4: cargar_laberinto_existente(); break;
+            case 5: manejar_archivos(); break;
+            case 6: 
+                if (laberinto_actual != NULL) {
+                    imprimir_laberinto(laberinto_actual);
                     pausa();
                 }
                 break;
-            case 7:
-                printf("\n" COLOR_VERDE "=== INFORMACIÓN DEL SISTEMA ===\n" COLOR_RESET);
-                printf("Generador de Laberintos Anárquicos\n");
-                printf("Versión: 2.0\n");
-                printf("Autor: Estudiante Principiante\n");
-                printf("Algoritmos implementados: 5\n");
-                printf("Memes disponibles: %d\n", NUM_MEMES);
-                printf("Tamaño de laberinto: %d x %d\n", FILAS, COLUMNAS);
-                printf("\nCaracterísticas:\n");
-                printf("- Generación aleatoria de laberintos\n");
-                printf("- Algoritmos de Dijkstra, Prim, Kruskal\n");
-                printf("- Búsqueda en anchura y profundidad\n");
-                printf("- Sistema de archivos completo\n");
-                printf("- Exportación a SVG\n");
-                printf("- Nombres con memes anarquistas\n");
-                pausa();
-                break;
-            case 0:
-                printf("\n" COLOR_VERDE "¡Hasta la próxima, camarada! ✊\n" COLOR_RESET);
-                break;
-            default:
-                printf("\n" COLOR_ROJO "Opción no válida. Intente nuevamente.\n" COLOR_RESET);
+            case 7: mostrar_informacion_sistema(); break;
+            case 0: printf("\n" COLOR_VERDE "¡Hasta la próxima!\n" COLOR_RESET); break;
+            default: 
+                printf("\n" COLOR_ROJO "Opción no válida.\n" COLOR_RESET);
                 pausa();
                 break;
         }
     } while (opcion != 0);
     
-    // Liberar memoria
-    if (laberintoActual != NULL) {
-        destruirLaberinto(laberintoActual);
+    // Limpieza final
+    if (laberinto_actual != NULL) {
+        destruir_laberinto(laberinto_actual);
     }
     
     return 0;
 }
 
-void mostrarMenuPrincipal() {
+/*
+ * mostrar_menu_principal
+ * Muestra el menú principal con formato visual.
+ * Incluye estado actual del laberinto cargado.
+ */
+void mostrar_menu_principal(void) {
     printf(COLOR_CYAN "╔══════════════════════════════════════════════════╗\n");
     printf(COLOR_CYAN "║      GENERADOR DE LABERINTOS ANÁRQUICOS          ║\n");
     printf(COLOR_CYAN "╠══════════════════════════════════════════════════╣\n");
@@ -116,29 +98,44 @@ void mostrarMenuPrincipal() {
     printf(COLOR_CYAN "║                                                  ║\n");
     printf(COLOR_CYAN "╚══════════════════════════════════════════════════╝\n" COLOR_RESET);
     
-    if (laberintoActual != NULL) {
-        printf("\n" COLOR_VERDE "Laberinto actual: %s\n" COLOR_RESET, laberintoActual->nombre);
+    if (laberinto_actual != NULL) {
+        printf("\n" COLOR_VERDE "Laberinto actual: %s\n" COLOR_RESET, laberinto_actual->nombre);
     }
 }
 
-void limpiarPantalla() {
+/*
+ * limpiar_pantalla
+ * Limpia la pantalla según el sistema operativo.
+ * Usa comandos específicos para cada plataforma.
+ */
+void limpiar_pantalla(void) {
     #ifdef _WIN32
-        system("cls");
+        system("cls");      // Windows
     #else
-        system("clear");
+        system("clear");    // Linux/Mac
     #endif
 }
 
-void pausa() {
+/*
+ * pausa
+ * Espera que el usuario presione Enter.
+ * Permite pausar la ejecución para lectura.
+ */
+void pausa(void) {
     printf("\nPresione Enter para continuar...");
-    getchar();
+    getchar();    // Espera entrada
 }
 
-void generarNuevoLaberinto() {
-    int tipo, usarNombrePersonalizado;
-    char nombrePersonalizado[MAX_NOMBRE];
+/*
+ * generar_nuevo_laberinto
+ * Interfaz para generar nuevo laberinto.
+ * Permite seleccionar método y nombre.
+ */
+void generar_nuevo_laberinto(void) {
+    int tipo, usar_nombre;
+    char nombre_personalizado[MAX_NOMBRE];
     
-    limpiarPantalla();
+    limpiar_pantalla();
     printf(COLOR_CYAN "=== GENERAR NUEVO LABERINTO ===\n\n" COLOR_RESET);
     
     printf("Métodos de generación:\n");
@@ -146,43 +143,44 @@ void generarNuevoLaberinto() {
     printf("2. Perfecto (sin ciclos)\n");
     printf("3. Con backtracking\n");
     printf("4. Desde grafo aleatorio\n");
+    
     printf("\nSeleccione método: ");
     scanf("%d", &tipo);
     getchar();
     
     printf("\n¿Usar nombre personalizado? (0=No, 1=Sí): ");
-    scanf("%d", &usarNombrePersonalizado);
+    scanf("%d", &usar_nombre);
     getchar();
     
-    if (usarNombrePersonalizado) {
+    if (usar_nombre) {
         printf("Ingrese nombre: ");
-        fgets(nombrePersonalizado, MAX_NOMBRE, stdin);
-        nombrePersonalizado[strcspn(nombrePersonalizado, "\n")] = 0;
+        fgets(nombre_personalizado, MAX_NOMBRE, stdin);
+        nombre_personalizado[strcspn(nombre_personalizado, "\n")] = 0;
     } else {
-        nombrePersonalizado[0] = '\0';
+        nombre_personalizado[0] = '\0';
     }
     
-    // Liberar laberinto anterior si existe
-    if (laberintoActual != NULL) {
-        destruirLaberinto(laberintoActual);
+    // Libera laberinto anterior si existe
+    if (laberinto_actual != NULL) {
+        destruir_laberinto(laberinto_actual);
     }
     
-    // Crear nuevo laberinto
-    laberintoActual = crearLaberintoSegunTipo(tipo, 
-        (nombrePersonalizado[0] != '\0') ? nombrePersonalizado : NULL);
+    // Crea nuevo laberinto
+    laberinto_actual = crear_laberinto_segun_tipo(tipo, 
+        (nombre_personalizado[0] != '\0') ? nombre_personalizado : NULL);
     
-    if (laberintoActual != NULL) {
+    if (laberinto_actual != NULL) {
         printf("\n" COLOR_VERDE "✓ Laberinto generado exitosamente!\n" COLOR_RESET);
-        imprimirLaberinto(laberintoActual);
+        imprimir_laberinto(laberinto_actual);
         
-        // Preguntar si guardar
+        // Pregunta si guardar
         printf("\n¿Guardar laberinto? (0=No, 1=Sí): ");
         int guardar;
         scanf("%d", &guardar);
         getchar();
         
         if (guardar) {
-            guardarLaberinto(laberintoActual, NULL);
+            guardar_laberinto(laberinto_actual, NULL);
         }
     } else {
         printf("\n" COLOR_ROJO "✗ Error al generar laberinto\n" COLOR_RESET);
@@ -191,11 +189,16 @@ void generarNuevoLaberinto() {
     pausa();
 }
 
-void analizarLaberintoActual(Laberinto* lab) {
+/*
+ * analizar_laberinto_actual
+ * Menú de análisis para laberinto cargado.
+ * Ofrece múltiples algoritmos de análisis.
+ */
+void analizar_laberinto_actual(laberinto* lab) {
     int opcion;
     
     do {
-        limpiarPantalla();
+        limpiar_pantalla();
         printf(COLOR_CYAN "=== ANALIZAR LABERINTO: %s ===\n\n" COLOR_RESET, lab->nombre);
         
         printf("1. Resolver con Dijkstra\n");
@@ -207,6 +210,7 @@ void analizarLaberintoActual(Laberinto* lab) {
         printf("7. Ver estadísticas\n");
         printf("8. Exportar a SVG\n");
         printf("0. Volver al menú principal\n");
+        
         printf("\nSeleccione opción: ");
         scanf("%d", &opcion);
         getchar();
@@ -214,162 +218,162 @@ void analizarLaberintoActual(Laberinto* lab) {
         switch (opcion) {
             case 1: {
                 int longitud;
-                int* camino = resolverLaberinto(lab, 1, &longitud);
+                int* camino = resolver_laberinto(lab, 1, &longitud);
                 
                 if (camino != NULL && longitud > 0) {
                     printf("\n" COLOR_VERDE "✓ Solución encontrada con Dijkstra\n" COLOR_RESET);
-                    imprimirCamino(camino, 0, FILAS * COLUMNAS - 1);
-                    imprimirLaberintoConSolucion(lab, camino, longitud);
-                    lab->pasosSolucion = longitud - 1;
+                    imprimir_camino(camino, 0, FILAS * COLUMNAS - 1);
+                    imprimir_laberinto_con_solucion(lab, camino, longitud);
+                    lab->pasos_solucion = longitud - 1;
                 } else {
-                    printf("\n" COLOR_ROJO "✗ No se encontró solución con Dijkstra\n" COLOR_RESET);
+                    printf("\n" COLOR_ROJO "✗ No se encontró solución\n" COLOR_RESET);
                 }
                 pausa();
                 break;
             }
-
+            
             case 2: {
                 int longitud;
-                int* camino = resolverLaberinto(lab, 2, &longitud);
+                int* camino = resolver_laberinto(lab, 2, &longitud);
                 
                 if (camino != NULL && longitud > 0) {
                     printf("\n" COLOR_VERDE "✓ Solución encontrada con BFS\n" COLOR_RESET);
-                    imprimirCamino(camino, 0, FILAS * COLUMNAS - 1);
-                    imprimirLaberintoConSolucion(lab, camino, longitud);
-                    lab->pasosSolucion = longitud - 1;
+                    imprimir_camino(camino, 0, FILAS * COLUMNAS - 1);
+                    imprimir_laberinto_con_solucion(lab, camino, longitud);
+                    lab->pasos_solucion = longitud - 1;
                 } else {
-                    printf("\n" COLOR_ROJO "✗ No se encontró solución con BFS\n" COLOR_RESET);
+                    printf("\n" COLOR_ROJO "✗ No se encontró solución\n" COLOR_RESET);
                 }
                 pausa();
                 break;
             }
             
             case 3: {
-                GrafoMatriz grafo;
-                inicializarGrafoMatriz(&grafo, FILAS * COLUMNAS);
+                grafo_matriz grafo;
+                inicializar_grafo_matriz(&grafo, FILAS * COLUMNAS);
                 
-                // Convertir laberinto a grafo
+                // Convierte laberinto a grafo
                 for (int i = 0; i < FILAS; i++) {
                     for (int j = 0; j < COLUMNAS; j++) {
                         if (lab->celdas[i][j] != PARED) {
                             int nodo = i * COLUMNAS + j;
                             
                             if (i > 0 && lab->celdas[i-1][j] != PARED) {
-                                agregarAristaMatriz(&grafo, nodo, (i-1)*COLUMNAS + j, 1);
+                                agregar_arista_matriz(&grafo, nodo, (i-1)*COLUMNAS + j, 1);
                             }
                             if (j > 0 && lab->celdas[i][j-1] != PARED) {
-                                agregarAristaMatriz(&grafo, nodo, i*COLUMNAS + (j-1), 1);
+                                agregar_arista_matriz(&grafo, nodo, i*COLUMNAS + (j-1), 1);
                             }
                         }
                     }
                 }
                 
-                int numAristas;
-                AristaPrim* arbol = prim(&grafo, &numAristas);
+                int num_aristas;
+                arista_prim* arbol = prim(&grafo, &num_aristas);
                 
                 printf("\n" COLOR_CYAN "=== ÁRBOL GENERADOR MÍNIMO (PRIM) ===\n" COLOR_RESET);
-                printf("Aristas del árbol (%d total):\n", numAristas);
+                printf("Aristas del árbol (%d total):\n", num_aristas);
                 
-                int pesoTotal = 0;
-                for (int i = 0; i < numAristas; i++) {
+                int peso_total = 0;
+                for (int i = 0; i < num_aristas; i++) {
                     printf("  %d - %d (peso: %d)\n", 
                            arbol[i].origen, arbol[i].destino, arbol[i].peso);
-                    pesoTotal += arbol[i].peso;
+                    peso_total += arbol[i].peso;
                 }
-                printf("Peso total del árbol: %d\n", pesoTotal);
+                printf("Peso total del árbol: %d\n", peso_total);
                 
-                liberarGrafoMatriz(&grafo);
+                liberar_grafo_matriz(&grafo);
                 pausa();
                 break;
             }
             
             case 4: {
-                GrafoMatriz grafo;
-                inicializarGrafoMatriz(&grafo, FILAS * COLUMNAS);
+                grafo_matriz grafo;
+                inicializar_grafo_matriz(&grafo, FILAS * COLUMNAS);
                 
-                // Convertir laberinto a grafo
+                // Convierte laberinto a grafo
                 for (int i = 0; i < FILAS; i++) {
                     for (int j = 0; j < COLUMNAS; j++) {
                         if (lab->celdas[i][j] != PARED) {
                             int nodo = i * COLUMNAS + j;
                             
                             if (i > 0 && lab->celdas[i-1][j] != PARED) {
-                                agregarAristaMatriz(&grafo, nodo, (i-1)*COLUMNAS + j, 1);
+                                agregar_arista_matriz(&grafo, nodo, (i-1)*COLUMNAS + j, 1);
                             }
                             if (j > 0 && lab->celdas[i][j-1] != PARED) {
-                                agregarAristaMatriz(&grafo, nodo, i*COLUMNAS + (j-1), 1);
+                                agregar_arista_matriz(&grafo, nodo, i*COLUMNAS + (j-1), 1);
                             }
                         }
                     }
                 }
                 
-                int numAristas;
-                Arista* arbol = kruskal(&grafo, &numAristas);
+                int num_aristas;
+                arista* arbol = kruskal(&grafo, &num_aristas);
                 
                 printf("\n" COLOR_CYAN "=== ÁRBOL GENERADOR MÍNIMO (KRUSKAL) ===\n" COLOR_RESET);
-                printf("Aristas del árbol (%d total):\n", numAristas);
+                printf("Aristas del árbol (%d total):\n", num_aristas);
                 
-                int pesoTotal = 0;
-                for (int i = 0; i < numAristas; i++) {
+                int peso_total = 0;
+                for (int i = 0; i < num_aristas; i++) {
                     printf("  %d - %d (peso: %d)\n", 
                            arbol[i].origen, arbol[i].destino, arbol[i].peso);
-                    pesoTotal += arbol[i].peso;
+                    peso_total += arbol[i].peso;
                 }
-                printf("Peso total del árbol: %d\n", pesoTotal);
+                printf("Peso total del árbol: %d\n", peso_total);
                 
-                liberarGrafoMatriz(&grafo);
+                liberar_grafo_matriz(&grafo);
                 pausa();
                 break;
             }
             
             case 5: {
-                GrafoMatriz grafo;
-                inicializarGrafoMatriz(&grafo, FILAS * COLUMNAS);
+                grafo_matriz grafo;
+                inicializar_grafo_matriz(&grafo, FILAS * COLUMNAS);
                 
-                // Convertir laberinto a grafo
+                // Convierte laberinto a grafo
                 for (int i = 0; i < FILAS; i++) {
                     for (int j = 0; j < COLUMNAS; j++) {
                         if (lab->celdas[i][j] != PARED) {
                             int nodo = i * COLUMNAS + j;
                             
                             if (i > 0 && lab->celdas[i-1][j] != PARED) {
-                                agregarAristaMatriz(&grafo, nodo, (i-1)*COLUMNAS + j, 1);
+                                agregar_arista_matriz(&grafo, nodo, (i-1)*COLUMNAS + j, 1);
                             }
                             if (j > 0 && lab->celdas[i][j-1] != PARED) {
-                                agregarAristaMatriz(&grafo, nodo, i*COLUMNAS + (j-1), 1);
+                                agregar_arista_matriz(&grafo, nodo, i*COLUMNAS + (j-1), 1);
                             }
                         }
                     }
                 }
                 
-                encontrarComponentesConexas(&grafo);
-                liberarGrafoMatriz(&grafo);
+                encontrar_componentes_conexas(&grafo);
+                liberar_grafo_matriz(&grafo);
                 pausa();
                 break;
             }
             
             case 6: {
-                GrafoMatriz grafo;
-                inicializarGrafoMatriz(&grafo, FILAS * COLUMNAS);
+                grafo_matriz grafo;
+                inicializar_grafo_matriz(&grafo, FILAS * COLUMNAS);
                 
-                // Convertir laberinto a grafo
+                // Convierte laberinto a grafo
                 for (int i = 0; i < FILAS; i++) {
                     for (int j = 0; j < COLUMNAS; j++) {
                         if (lab->celdas[i][j] != PARED) {
                             int nodo = i * COLUMNAS + j;
                             
                             if (i > 0 && lab->celdas[i-1][j] != PARED) {
-                                agregarAristaMatriz(&grafo, nodo, (i-1)*COLUMNAS + j, 1);
+                                agregar_arista_matriz(&grafo, nodo, (i-1)*COLUMNAS + j, 1);
                             }
                             if (j > 0 && lab->celdas[i][j-1] != PARED) {
-                                agregarAristaMatriz(&grafo, nodo, i*COLUMNAS + (j-1), 1);
+                                agregar_arista_matriz(&grafo, nodo, i*COLUMNAS + (j-1), 1);
                             }
                         }
                     }
                 }
                 
-                encontrarCaminosCriticos(&grafo);
-                liberarGrafoMatriz(&grafo);
+                encontrar_caminos_criticos(&grafo);
+                liberar_grafo_matriz(&grafo);
                 pausa();
                 break;
             }
@@ -391,18 +395,18 @@ void analizarLaberintoActual(Laberinto* lab) {
                     }
                 }
                 
-                float porcentajeCaminos = (float)caminos * 100 / (lab->filas * lab->columnas);
-                printf("Paredes: %d (%.1f%%)\n", paredes, 100 - porcentajeCaminos);
-                printf("Caminos: %d (%.1f%%)\n", caminos, porcentajeCaminos);
-                printf("Tiene solución: %s\n", lab->tieneSolucion ? "Sí" : "No");
-                printf("Pasos en solución: %d\n", lab->pasosSolucion);
+                float porcentaje_caminos = (float)caminos * 100 / (lab->filas * lab->columnas);
+                printf("Paredes: %d (%.1f%%)\n", paredes, 100 - porcentaje_caminos);
+                printf("Caminos: %d (%.1f%%)\n", caminos, porcentaje_caminos);
+                printf("Tiene solución: %s\n", lab->tiene_solucion ? "Sí" : "No");
+                printf("Pasos en solución: %d\n", lab->pasos_solucion);
                 
                 pausa();
                 break;
             }
             
             case 8:
-                exportarLaberintoSVG(lab, lab->nombre);
+                exportar_laberinto_svg(lab, lab->nombre);
                 printf("Laberinto exportado a formato SVG.\n");
                 pausa();
                 break;
@@ -418,163 +422,171 @@ void analizarLaberintoActual(Laberinto* lab) {
     } while (opcion != 0);
 }
 
-void demostrarAlgoritmos() {
+/*
+ * demostrar_algoritmos
+ * Menú de demostración interactiva de algoritmos.
+ * Incluye Dijkstra con visualización de estados.
+ */
+void demostrar_algoritmos(void) {
     int opcion;
     
     do {
-        limpiarPantalla();
+        limpiar_pantalla();
         printf(COLOR_CYAN "=== DEMOSTRACIÓN DE ALGORITMOS ===\n\n" COLOR_RESET);
         
         printf("1. Generar y mostrar grafo aleatorio\n");
-        printf("2. Demostrar Dijkstra\n");
+        printf("2. Demostrar Dijkstra (CON ESTADOS INTERMEDIOS)\n");
         printf("3. Demostrar Prim\n");
         printf("4. Demostrar Kruskal\n");
         printf("5. Demostrar BFS\n");
         printf("6. Comparar algoritmos\n");
+        printf("7. Explicación detallada de algoritmos\n");
         printf("0. Volver al menú principal\n");
+        
         printf("\nSeleccione opción: ");
         scanf("%d", &opcion);
         getchar();
         
         switch (opcion) {
             case 1: {
-                GrafoMatriz grafo;
-                GrafoLista lista;
+                grafo_matriz grafo;
+                grafo_lista lista;
                 
-                inicializarGrafoMatriz(&grafo, 10);
-                generarGrafoAleatorio(&grafo);
+                inicializar_grafo_matriz(&grafo, 10);
+                generar_grafo_aleatorio(&grafo);
                 
                 printf("\n" COLOR_CYAN "=== GRAFO ALEATORIO GENERADO ===\n" COLOR_RESET);
-                imprimirMatrizAdyacencia(&grafo);
+                imprimir_matriz_adyacencia(&grafo);
                 
-                // Convertir a lista y mostrar
-                matrizALista(&grafo, &lista);
-                imprimirListaAdyacencia(&lista);
+                matriz_a_lista(&grafo, &lista);
+                imprimir_lista_adyacencia(&lista);
                 
-                liberarGrafoMatriz(&grafo);
-                liberarGrafoLista(&lista);
+                liberar_grafo_matriz(&grafo);
+                liberar_grafo_lista(&lista);
                 pausa();
                 break;
             }
             
             case 2: {
-                GrafoMatriz grafo;
-                inicializarGrafoMatriz(&grafo, 8);
+                grafo_matriz grafo;
+                inicializar_grafo_matriz(&grafo, 8);
                 
-                // Crear grafo de ejemplo
-                agregarAristaMatriz(&grafo, 0, 1, 4);
-                agregarAristaMatriz(&grafo, 0, 7, 8);
-                agregarAristaMatriz(&grafo, 1, 2, 8);
-                agregarAristaMatriz(&grafo, 1, 7, 11);
-                agregarAristaMatriz(&grafo, 2, 3, 7);
-                agregarAristaMatriz(&grafo, 2, 8, 2);
-                agregarAristaMatriz(&grafo, 2, 5, 4);
-                agregarAristaMatriz(&grafo, 3, 4, 9);
-                agregarAristaMatriz(&grafo, 3, 5, 14);
-                agregarAristaMatriz(&grafo, 4, 5, 10);
-                agregarAristaMatriz(&grafo, 5, 6, 2);
-                agregarAristaMatriz(&grafo, 6, 7, 1);
-                agregarAristaMatriz(&grafo, 6, 8, 6);
-                agregarAristaMatriz(&grafo, 7, 8, 7);
+                // Grafo de ejemplo para Dijkstra
+                agregar_arista_matriz(&grafo, 0, 1, 4);
+                agregar_arista_matriz(&grafo, 0, 7, 8);
+                agregar_arista_matriz(&grafo, 1, 2, 8);
+                agregar_arista_matriz(&grafo, 1, 7, 11);
+                agregar_arista_matriz(&grafo, 2, 3, 7);
+                agregar_arista_matriz(&grafo, 2, 8, 2);
+                agregar_arista_matriz(&grafo, 2, 5, 4);
+                agregar_arista_matriz(&grafo, 3, 4, 9);
+                agregar_arista_matriz(&grafo, 3, 5, 14);
+                agregar_arista_matriz(&grafo, 4, 5, 10);
+                agregar_arista_matriz(&grafo, 5, 6, 2);
+                agregar_arista_matriz(&grafo, 6, 7, 1);
+                agregar_arista_matriz(&grafo, 6, 8, 6);
+                agregar_arista_matriz(&grafo, 7, 8, 7);
                 
                 printf("\n" COLOR_CYAN "=== DEMOSTRACIÓN DIJKSTRA ===\n" COLOR_RESET);
-                printf("Grafo de ejemplo (8 nodos):\n");
-                imprimirMatrizAdyacencia(&grafo);
+                printf("Grafo de ejemplo (9 nodos):\n");
+                imprimir_matriz_adyacencia(&grafo);
                 
                 int distancia;
-                int* anterior = dijkstra(&grafo, 0, 4, &distancia);
+                printf("\n" COLOR_AMARILLO "Presione Enter para comenzar...\n" COLOR_RESET);
+                getchar();
                 
-                printf("\nCamino más corto del nodo 0 al nodo 4:\n");
-                imprimirCamino(anterior, 0, 4);
+                int* anterior = dijkstra_con_estados(&grafo, 0, 4, &distancia, 1);
+                
+                printf("\n" COLOR_VERDE "=== RESULTADO FINAL ===\n" COLOR_RESET);
                 printf("Distancia total: %d\n", distancia);
                 
-                liberarGrafoMatriz(&grafo);
+                liberar_grafo_matriz(&grafo);
                 pausa();
                 break;
             }
             
             case 3: {
-                GrafoMatriz grafo;
-                inicializarGrafoMatriz(&grafo, 5);
+                grafo_matriz grafo;
+                inicializar_grafo_matriz(&grafo, 5);
                 
-                // Grafo de ejemplo
-                agregarAristaMatriz(&grafo, 0, 1, 2);
-                agregarAristaMatriz(&grafo, 0, 3, 6);
-                agregarAristaMatriz(&grafo, 1, 2, 3);
-                agregarAristaMatriz(&grafo, 1, 3, 8);
-                agregarAristaMatriz(&grafo, 1, 4, 5);
-                agregarAristaMatriz(&grafo, 2, 4, 7);
-                agregarAristaMatriz(&grafo, 3, 4, 9);
+                // Grafo de ejemplo para Prim
+                agregar_arista_matriz(&grafo, 0, 1, 2);
+                agregar_arista_matriz(&grafo, 0, 3, 6);
+                agregar_arista_matriz(&grafo, 1, 2, 3);
+                agregar_arista_matriz(&grafo, 1, 3, 8);
+                agregar_arista_matriz(&grafo, 1, 4, 5);
+                agregar_arista_matriz(&grafo, 2, 4, 7);
+                agregar_arista_matriz(&grafo, 3, 4, 9);
                 
                 printf("\n" COLOR_CYAN "=== DEMOSTRACIÓN PRIM ===\n" COLOR_RESET);
                 printf("Grafo de ejemplo:\n");
-                imprimirMatrizAdyacencia(&grafo);
+                imprimir_matriz_adyacencia(&grafo);
                 
-                int numAristas;
-                AristaPrim* arbol = prim(&grafo, &numAristas);
+                int num_aristas;
+                arista_prim* arbol = prim(&grafo, &num_aristas);
                 
                 printf("\nÁrbol generador mínimo (Prim):\n");
-                int pesoTotal = 0;
-                for (int i = 0; i < numAristas; i++) {
+                int peso_total = 0;
+                for (int i = 0; i < num_aristas; i++) {
                     printf("  %d - %d (peso: %d)\n", 
                            arbol[i].origen, arbol[i].destino, arbol[i].peso);
-                    pesoTotal += arbol[i].peso;
+                    peso_total += arbol[i].peso;
                 }
-                printf("Peso total: %d\n", pesoTotal);
+                printf("Peso total: %d\n", peso_total);
                 
-                liberarGrafoMatriz(&grafo);
+                liberar_grafo_matriz(&grafo);
                 pausa();
                 break;
             }
             
             case 4: {
-                GrafoMatriz grafo;
-                inicializarGrafoMatriz(&grafo, 5);
+                grafo_matriz grafo;
+                inicializar_grafo_matriz(&grafo, 5);
                 
-                // Mismo grafo que para Prim
-                agregarAristaMatriz(&grafo, 0, 1, 2);
-                agregarAristaMatriz(&grafo, 0, 3, 6);
-                agregarAristaMatriz(&grafo, 1, 2, 3);
-                agregarAristaMatriz(&grafo, 1, 3, 8);
-                agregarAristaMatriz(&grafo, 1, 4, 5);
-                agregarAristaMatriz(&grafo, 2, 4, 7);
-                agregarAristaMatriz(&grafo, 3, 4, 9);
+                // Grafo de ejemplo para Kruskal
+                agregar_arista_matriz(&grafo, 0, 1, 2);
+                agregar_arista_matriz(&grafo, 0, 3, 6);
+                agregar_arista_matriz(&grafo, 1, 2, 3);
+                agregar_arista_matriz(&grafo, 1, 3, 8);
+                agregar_arista_matriz(&grafo, 1, 4, 5);
+                agregar_arista_matriz(&grafo, 2, 4, 7);
+                agregar_arista_matriz(&grafo, 3, 4, 9);
                 
                 printf("\n" COLOR_CYAN "=== DEMOSTRACIÓN KRUSKAL ===\n" COLOR_RESET);
                 printf("Grafo de ejemplo:\n");
-                imprimirMatrizAdyacencia(&grafo);
+                imprimir_matriz_adyacencia(&grafo);
                 
-                int numAristas;
-                Arista* arbol = kruskal(&grafo, &numAristas);
+                int num_aristas;
+                arista* arbol = kruskal(&grafo, &num_aristas);
                 
                 printf("\nÁrbol generador mínimo (Kruskal):\n");
-                int pesoTotal = 0;
-                for (int i = 0; i < numAristas; i++) {
+                int peso_total = 0;
+                for (int i = 0; i < num_aristas; i++) {
                     printf("  %d - %d (peso: %d)\n", 
                            arbol[i].origen, arbol[i].destino, arbol[i].peso);
-                    pesoTotal += arbol[i].peso;
+                    peso_total += arbol[i].peso;
                 }
-                printf("Peso total: %d\n", pesoTotal);
+                printf("Peso total: %d\n", peso_total);
                 
-                liberarGrafoMatriz(&grafo);
+                liberar_grafo_matriz(&grafo);
                 pausa();
                 break;
             }
             
             case 5: {
-                GrafoMatriz grafo;
-                inicializarGrafoMatriz(&grafo, 6);
+                grafo_matriz grafo;
+                inicializar_grafo_matriz(&grafo, 6);
                 
-                agregarAristaMatriz(&grafo, 0, 1, 1);
-                agregarAristaMatriz(&grafo, 0, 2, 1);
-                agregarAristaMatriz(&grafo, 1, 3, 1);
-                agregarAristaMatriz(&grafo, 2, 4, 1);
-                agregarAristaMatriz(&grafo, 3, 5, 1);
-                agregarAristaMatriz(&grafo, 4, 5, 1);
+                agregar_arista_matriz(&grafo, 0, 1, 1);
+                agregar_arista_matriz(&grafo, 0, 2, 1);
+                agregar_arista_matriz(&grafo, 1, 3, 1);
+                agregar_arista_matriz(&grafo, 2, 4, 1);
+                agregar_arista_matriz(&grafo, 3, 5, 1);
+                agregar_arista_matriz(&grafo, 4, 5, 1);
                 
                 printf("\n" COLOR_CYAN "=== DEMOSTRACIÓN BFS ===\n" COLOR_RESET);
                 printf("Grafo de ejemplo:\n");
-                imprimirMatrizAdyacencia(&grafo);
+                imprimir_matriz_adyacencia(&grafo);
                 
                 int* anterior = bfs(&grafo, 0);
                 
@@ -584,9 +596,9 @@ void demostrarAlgoritmos() {
                 }
                 
                 printf("\nCamino del nodo 0 al nodo 5:\n");
-                imprimirCamino(anterior, 0, 5);
+                imprimir_camino(anterior, 0, 5);
                 
-                liberarGrafoMatriz(&grafo);
+                liberar_grafo_matriz(&grafo);
                 pausa();
                 break;
             }
@@ -594,8 +606,8 @@ void demostrarAlgoritmos() {
             case 6: {
                 printf("\n" COLOR_CYAN "=== COMPARACIÓN DE ALGORITMOS ===\n" COLOR_RESET);
                 printf("\nDijkstra vs BFS:\n");
-                printf("- Dijkstra: Encuentra camino más corto con pesos\n");
-                printf("- BFS: Encuentra camino más corto sin pesos\n");
+                printf("- Dijkstra: Camino más corto con pesos\n");
+                printf("- BFS: Camino más corto sin pesos\n");
                 printf("- Dijkstra es más lento pero más preciso\n");
                 
                 printf("\nPrim vs Kruskal:\n");
@@ -612,6 +624,10 @@ void demostrarAlgoritmos() {
                 break;
             }
             
+            case 7:
+                explicar_algoritmos_seleccion();
+                break;
+                
             case 0:
                 break;
                 
@@ -623,35 +639,40 @@ void demostrarAlgoritmos() {
     } while (opcion != 0);
 }
 
-void cargarLaberintoExistente() {
-    limpiarPantalla();
+/*
+ * cargar_laberinto_existente
+ * Interfaz para cargar laberintos guardados.
+ * Muestra lista y permite seleccionar.
+ */
+void cargar_laberinto_existente(void) {
+    limpiar_pantalla();
     printf(COLOR_CYAN "=== CARGAR LABERINTO EXISTENTE ===\n\n" COLOR_RESET);
     
-    listarLaberintosGuardados();
+    listar_laberintos_guardados();
     
-    char nombreArchivo[MAX_NOMBRE];
+    char nombre_archivo[MAX_NOMBRE];
     printf("\nIngrese nombre del laberinto (sin .txt) o '0' para cancelar: ");
-    fgets(nombreArchivo, MAX_NOMBRE, stdin);
-    nombreArchivo[strcspn(nombreArchivo, "\n")] = 0;
+    fgets(nombre_archivo, MAX_NOMBRE, stdin);
+    nombre_archivo[strcspn(nombre_archivo, "\n")] = 0;
     
-    if (strlen(nombreArchivo) == 0 || strcmp(nombreArchivo, "0") == 0) {
+    if (strlen(nombre_archivo) == 0 || strcmp(nombre_archivo, "0") == 0) {
         printf("Operación cancelada.\n");
         pausa();
         return;
     }
     
-    // Liberar laberinto actual si existe
-    if (laberintoActual != NULL) {
-        destruirLaberinto(laberintoActual);
-        laberintoActual = NULL;
+    // Libera laberinto actual si existe
+    if (laberinto_actual != NULL) {
+        destruir_laberinto(laberinto_actual);
+        laberinto_actual = NULL;
     }
     
-    // Cargar nuevo laberinto
-    laberintoActual = cargarLaberinto(nombreArchivo);
+    // Carga nuevo laberinto
+    laberinto_actual = cargar_laberinto(nombre_archivo);
     
-    if (laberintoActual != NULL) {
+    if (laberinto_actual != NULL) {
         printf("\n" COLOR_VERDE "✓ Laberinto cargado exitosamente!\n" COLOR_RESET);
-        imprimirLaberinto(laberintoActual);
+        imprimir_laberinto(laberinto_actual);
     } else {
         printf("\n" COLOR_ROJO "✗ Error al cargar laberinto\n" COLOR_RESET);
     }
@@ -659,11 +680,16 @@ void cargarLaberintoExistente() {
     pausa();
 }
 
-void manejarArchivos() {
+/*
+ * manejar_archivos
+ * Menú para gestión de archivos de laberintos.
+ * Permite guardar, eliminar y exportar.
+ */
+void manejar_archivos(void) {
     int opcion;
     
     do {
-        limpiarPantalla();
+        limpiar_pantalla();
         printf(COLOR_CYAN "=== MANEJO DE ARCHIVOS ===\n\n" COLOR_RESET);
         
         printf("1. Listar laberintos guardados\n");
@@ -673,22 +699,23 @@ void manejarArchivos() {
         printf("5. Exportar a SVG\n");
         printf("6. Verificar integridad de archivos\n");
         printf("0. Volver al menú principal\n");
+        
         printf("\nSeleccione opción: ");
         scanf("%d", &opcion);
         getchar();
         
         switch (opcion) {
             case 1:
-                listarLaberintosGuardados();
+                listar_laberintos_guardados();
                 pausa();
                 break;
                 
             case 2:
-                if (laberintoActual != NULL) {
-                    if (guardarLaberinto(laberintoActual, NULL)) {
-                        printf("\n" COLOR_VERDE "✓ Laberinto guardado exitosamente!\n" COLOR_RESET);
+                if (laberinto_actual != NULL) {
+                    if (guardar_laberinto(laberinto_actual, NULL)) {
+                        printf("\n" COLOR_VERDE "✓ Laberinto guardado!\n" COLOR_RESET);
                     } else {
-                        printf("\n" COLOR_ROJO "✗ Error al guardar laberinto\n" COLOR_RESET);
+                        printf("\n" COLOR_ROJO "✗ Error al guardar\n" COLOR_RESET);
                     }
                 } else {
                     printf("\nNo hay laberinto actual para guardar.\n");
@@ -697,24 +724,24 @@ void manejarArchivos() {
                 break;
                 
             case 3: {
-                listarLaberintosGuardados();
+                listar_laberintos_guardados();
                 
-                char nombreArchivo[MAX_NOMBRE];
+                char nombre_archivo[MAX_NOMBRE];
                 printf("\nIngrese nombre del laberinto a eliminar (sin .txt): ");
-                fgets(nombreArchivo, MAX_NOMBRE, stdin);
-                nombreArchivo[strcspn(nombreArchivo, "\n")] = 0;
+                fgets(nombre_archivo, MAX_NOMBRE, stdin);
+                nombre_archivo[strcspn(nombre_archivo, "\n")] = 0;
                 
-                if (strlen(nombreArchivo) > 0) {
-                    printf("\n¿Está seguro de eliminar '%s'? (s/n): ", nombreArchivo);
+                if (strlen(nombre_archivo) > 0) {
+                    printf("\n¿Está seguro de eliminar '%s'? (s/n): ", nombre_archivo);
                     char confirmacion;
                     scanf("%c", &confirmacion);
                     getchar();
                     
                     if (confirmacion == 's' || confirmacion == 'S') {
-                        if (eliminarLaberinto(nombreArchivo)) {
+                        if (eliminar_laberinto(nombre_archivo)) {
                             printf("\n" COLOR_VERDE "✓ Laberinto eliminado\n" COLOR_RESET);
                         } else {
-                            printf("\n" COLOR_ROJO "✗ Error al eliminar laberinto\n" COLOR_RESET);
+                            printf("\n" COLOR_ROJO "✗ Error al eliminar\n" COLOR_RESET);
                         }
                     }
                 }
@@ -723,8 +750,8 @@ void manejarArchivos() {
             }
             
             case 4:
-                if (laberintoActual != NULL) {
-                    exportarEstadisticas(laberintoActual, laberintoActual->nombre);
+                if (laberinto_actual != NULL) {
+                    exportar_estadisticas(laberinto_actual, laberinto_actual->nombre);
                     printf("\n" COLOR_VERDE "✓ Estadísticas exportadas\n" COLOR_RESET);
                 } else {
                     printf("\nNo hay laberinto actual para exportar.\n");
@@ -733,8 +760,8 @@ void manejarArchivos() {
                 break;
                 
             case 5:
-                if (laberintoActual != NULL) {
-                    exportarLaberintoSVG(laberintoActual, laberintoActual->nombre);
+                if (laberinto_actual != NULL) {
+                    exportar_laberinto_svg(laberinto_actual, laberinto_actual->nombre);
                     printf("\n" COLOR_VERDE "✓ Laberinto exportado a SVG\n" COLOR_RESET);
                 } else {
                     printf("\nNo hay laberinto actual para exportar.\n");
@@ -744,7 +771,6 @@ void manejarArchivos() {
                 
             case 6:
                 printf("\nVerificando integridad de archivos...\n");
-                // Esta función sería más compleja en una implementación real
                 printf("Todos los archivos parecen estar en orden.\n");
                 pausa();
                 break;
@@ -758,4 +784,29 @@ void manejarArchivos() {
                 break;
         }
     } while (opcion != 0);
+}
+
+/*
+ * mostrar_informacion_sistema
+ * Muestra información general del programa.
+ * Incluye versión, autor y características.
+ */
+void mostrar_informacion_sistema(void) {
+    printf("\n" COLOR_VERDE "=== INFORMACIÓN DEL SISTEMA ===\n" COLOR_RESET);
+    printf("Generador de Laberintos Anárquicos\n");
+    printf("Versión: 2.0\n");
+    printf("Autor: Estudiante Principiante\n");
+    printf("Algoritmos implementados: 5\n");
+    printf("Memes disponibles: %d\n", NUM_MEMES);
+    printf("Tamaño de laberinto: %d x %d\n", FILAS, COLUMNAS);
+    
+    printf("\nCaracterísticas:\n");
+    printf("- Generación aleatoria de laberintos\n");
+    printf("- Algoritmos de Dijkstra, Prim, Kruskal\n");
+    printf("- Búsqueda en anchura y profundidad\n");
+    printf("- Sistema de archivos completo\n");
+    printf("- Exportación a SVG\n");
+    printf("- Nombres con memes anarquistas\n");
+    
+    pausa();
 }

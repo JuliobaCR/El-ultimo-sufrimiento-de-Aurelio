@@ -9,17 +9,17 @@
 #include "laberinto.h"
 
 // Funciones de archivos
-int guardarLaberinto(Laberinto* lab, const char* nombreArchivo);
-Laberinto* cargarLaberinto(const char* nombreArchivo);
-int existeLaberinto(const char* nombreArchivo);
-void listarLaberintosGuardados();
-int eliminarLaberinto(const char* nombreArchivo);
-void exportarLaberintoSVG(Laberinto* lab, const char* nombreArchivo);
-void exportarEstadisticas(Laberinto* lab, const char* nombreArchivo);
+int guardar_laberinto(laberinto* lab, const char* nombreArchivo);
+laberinto* cargar_laberinto(const char* nombreArchivo);
+int existe_laberinto(const char* nombreArchivo);
+void listar_laberintos_guardados();
+int eliminar_laberinto(const char* nombreArchivo);
+void exportar_laberinto_svg(laberinto* lab, const char* nombreArchivo);
+void exportar_estadisticas(laberinto* lab, const char* nombreArchivo);
 
 // Funciones auxiliares
-void crearDirectorioLaberintos();
-char* generarNombreArchivo(const char* nombreLaberinto);
-int validarArchivoLaberinto(const char* nombreArchivo);
+void crear_directorio_laberintos();
+char* generar_nombre_archivo(const char* nombreLaberinto);
+int validar_archivo_laberinto(const char* nombreArchivo);
 
 #endif // ARCHIVOS_H

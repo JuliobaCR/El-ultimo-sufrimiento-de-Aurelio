@@ -1,12 +1,13 @@
 /*
- * MEMES.C
- * Definición del array de memes anarquistas
+ * memes.c
+ * Array de nombres humorísticos para laberintos.
+ * Combinación de memes anarquistas y de universidad.
  */
 
 #include "memes.h"
 
-const char* memesAnarquismo[NUM_MEMES] = {
-    // Clásicos
+const char* memes_anarquismo[NUM_MEMES] = {
+    // Memes anarquistas clásicos
     "ACAB_Laberinto",
     "Sin_Dios_Ni_Estado",
     "PropiedadEsRobo",
@@ -18,22 +19,29 @@ const char* memesAnarquismo[NUM_MEMES] = {
     "AutogestionLaberintica",
     "HorizontalidadTotal",
     
-    // Modernos
-    "CryptoAnarquista",
-    "BlackBlocMaze",
-    "Antifa_Laberinto",
-    "QueSeVayanTodos",
-    "NoPasarán",
-    "ElPuebloUnido",
-    "SubversivoTotal",
-    "InsurreccionDiaria",
-    "SabotajeAutonomo",
-    "ContraculturaMaze",
+    // Memes universitarios
     
-    // Filosóficos
-    "KropotkinApproves",
-    "BakuninWasHere",
-    "ProudhonMaze",
-    "EmmaGoldmanSmiles",
-    "StirnerEgoLaberinto"
+    "CafeYSufrimiento",
+    "TP_EntregadoATiempo",
+    "DormirEsParaDebiles",
+    "DebuggingHastaElAmanecer",
+    "CatedraticoSatanico",
+    "Biblioteca24/7",
+    "CrisisExistencialSemestral",
+    "GrupoDeWhatsAppExplota",
+    "PresentacionSinDormir",
+    
+    
+    "ParcialSorpresa",
+    "RecuperatorioOtraVez",
+    "TesisNuncaAcaba",
+    "CupoEnElCurso",
+    "PaseDirectoONada",
+    
+    //programación
+    "SegmentationFault",
+    "MemoryLeakFest",
+    "InfiniteLoopHell",
+    "NullPointerException",
+    "WorksOnMyMachine"
 };

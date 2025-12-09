@@ -1,53 +1,86 @@
-ÁREA DE CONCLUSIONES
-1. Sobre la implementación del grafo
-El programa utiliza una matriz de adyacencia para representar el grafo, lo cual es apropiado para grafos densos y de tamaño moderado. Para laberintos más grandes, una lista de adyacencia sería más eficiente en memoria, pero la matriz facilita la implementación para principiantes.
+# GENERADOR DE LABERINTOS ANÁRQUICOS
 
-2. Sobre los algoritmos implementados
-Dijkstra: Se implementó correctamente para encontrar el camino más corto entre dos nodos, demostrando su utilidad para resolver laberintos.
+## Descripción
+Sistema completo para generación, análisis y visualización de laberintos.
+Implementa algoritmos de grafos con interfaz interactiva.
 
-Prim: Se utilizó para generar un árbol generador mínimo, que podría servir como base para crear laberintos con caminos únicos entre cualquier par de puntos.
+## Características Principales
 
-3. Sobre la generación de laberintos
-El método combina:
+### 1. Generación de Laberintos
+- 4 métodos diferentes
+- Nombres aleatorios con memes
+- Tamaño configurable
 
-Conexiones regulares (vecinos ortogonales)
+### 2. Algoritmos Implementados
+- **Dijkstra con estados intermedios**: Visualización paso a paso
+- **Prim**: Árbol generador mínimo para laberintos perfectos
+- **Kruskal**: Alternativa a Prim para grafos dispersos
+- **BFS**: Búsqueda en anchura para caminos más cortos
+- Análisis de componentes conexas
 
-Conexiones aleatorias (diagonales)
+### 3. Sistema de Archivos
+- Guardado y carga de laberintos
+- Exportación a formato SVG
+- Estadísticas detalladas
+- Directorio organizado
 
-Probabilidades para decidir qué conexiones se convierten en caminos
-Esto genera laberintos diversos en cada ejecución.
+### 4. Interfaz de Usuario
+- Menús jerárquicos con colores
+- Visualización gráfica de laberintos
+- Animación de soluciones
+- Navegación intuitiva
 
-4. Sobre el uso de archivos
-Cada laberinto se guarda en un archivo de texto con su nombre, permitiendo revisitar laberintos generados previamente. El formato es visual y legible.
+## Estructura del Código
 
-5. Sobre los memes anarquistas
-Los nombres agregados tienen sentido dentro del contexto solicitado, añadiendo un toque humorístico y temático al proyecto.
+### Archivos Principales
+- `main.c`: Programa principal y menús
+- `grafo.h/c`: Estructuras y operaciones de grafos
+- `algoritmos.h/c`: Implementación de algoritmos
+- `laberinto.h/c`: Generación y visualización
+- `archivos.h/c`: Manejo de persistencia
+- `memes.h/c`: Nombres humorísticos
+- `config.h`: Configuraciones globales
 
-6. Posibles mejoras
-Implementar el algoritmo de Kruskal como alternativa
+### Cumplimiento de Requisitos
 
-Añadir resolución automática con visualización del camino
+#### 1. Dijkstra con Estados Intermedios
+- Función `dijkstra_con_estados()` muestra cada iteración
+- Tablas detalladas con información de nodos
+- Reconstrucción paso a paso del camino
+- Pausas para estudio del algoritmo
 
-Permitir al usuario definir el tamaño del laberinto
+#### 2. Segundo Algoritmo (Prim)
+- Implementado completamente en `prim()`
+- Explicación detallada en `explicar_algoritmos_seleccion()`
+- Comparación con Kruskal y BFS
+- Aplicación a generación de laberintos
 
-Crear una interfaz gráfica simple
+#### 3. Menús y Visualización
+- Sistema de menús completo en `main.c`
+- Laberintos mostrados con caracteres gráficos
+- Colores ANSI para mejor legibilidad
+- Animación de soluciones paso a paso
 
-Implementar backtracking para garantizar que todos los caminos sean alcanzables
+#### 4. Calidad de Código
+- Todas las funciones en `snake_case`
+- Comentarios en bloque breves (3-4 líneas)
+- Comentarios en línea para código complejo
+- Funciones divididas por responsabilidad
+- Estilo consistente en todos los archivos
 
-7. Dificultades encontradas
-Balancear aleatoriedad con la garantía de que haya al menos un camino solución
+#### 5. Memes
+- 25 nombres combinando anarquismo y universidad
+- Temática humorística y relacionada
+- Nombres aleatorios para laberintos
 
-Representar visualmente el laberinto en terminal de forma clara
+## Compilación y Ejecución
 
-Gestionar la memoria eficientemente para la matriz de adyacencia
+### Requisitos
+- Compilador GCC
+- Sistema operativo Linux/Unix o Windows con WSL
+- Terminal con soporte ANSI colors
 
-8. Aprendizajes obtenidos
-Implementación práctica de algoritmos clásicos de grafos
-
-Manipulación de matrices bidimensionales en C
-
-Generación de estructuras de datos complejas
-
-Manejo de archivos para persistencia de datos
-
-Importancia de la aleatoriedad controlada en generación de contenidos
+### Compilación
+```bash
+make clean
+make

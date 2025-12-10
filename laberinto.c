@@ -102,7 +102,7 @@ void destruir_laberinto(laberinto* lab) {
 /*
  * generar_aleatorio
  * Genera laberinto usando método aleatorio simple.
- * Crea camino principal y luego añade ramificaciones.
+ * Crea un camino principal (tronco) y múltiples ramas como un árbol.
  */
 void generar_aleatorio(laberinto* lab) {
     srand(time(NULL));  // Inicializa generador aleatorio
@@ -114,39 +114,488 @@ void generar_aleatorio(laberinto* lab) {
         }
     }
     
-    int i = 0, j = 0;  // Coordenadas actuales
+    // ===== PASO 1: Crear tronco principal desde entrada a salida =====
+    // Usaremos una lista para guardar el camino principal
+    int camino_principal[FILAS * COLUMNAS][2];
+    int longitud_principal = 0;
     
-    // Crea camino principal de entrada a salida
+    int i = 0, j = 0;
+    
     while (i < FILAS - 1 || j < COLUMNAS - 1) {
-        lab->celdas[i][j] = CAMINO;  // Marca como camino
+        // Guardar posición actual en el camino principal
+        camino_principal[longitud_principal][0] = i;
+        camino_principal[longitud_principal][1] = j;
+        longitud_principal++;
         
-        // Decide dirección (abajo o derecha)
-        if (i < FILAS - 1 && j < COLUMNAS - 1) {
-            if (rand() % 2 == 0) {  // 50% probabilidad
-                i++;  // Abajo
-            } else {
-                j++;  // Derecha
+        lab->celdas[i][j] = CAMINO;  // Marcar como camino
+        
+        // Decidir dirección con tendencia hacia la salida
+        int movimientos_posibles[4][2] = {{1,0}, {0,1}, {-1,0}, {0,-1}};  // abajo, derecha, arriba, izquierda
+        int mejores_movimientos[2];
+        int num_mejores = 0;
+        
+        // Calcular distancia a la salida para cada posible movimiento
+        for (int d = 0; d < 4; d++) {
+            int ni = i + movimientos_posibles[d][0];
+            int nj = j + movimientos_posibles[d][1];
+            
+            // Verificar límites y que no sea pared (para no pisar nuestro propio camino)
+            if (ni >= 0 && ni < FILAS && nj >= 0 && nj < COLUMNAS && 
+                lab->celdas[ni][nj] == PARED) {
+                
+                // Calcular distancia Manhattan a la salida
+                int distancia = abs(ni - (FILAS-1)) + abs(nj - (COLUMNAS-1));
+                
+                // Los movimientos que nos acercan a la salida son mejores
+                if (distancia < abs(i - (FILAS-1)) + abs(j - (COLUMNAS-1))) {
+                    if (num_mejores < 2) {
+                        mejores_movimientos[num_mejores] = d;
+                        num_mejores++;
+                    }
+                }
             }
-        } else if (i < FILAS - 1) {  // Solo puede ir abajo
-            i++;
-        } else {                     // Solo puede ir derecha
-            j++;
+        }
+        
+        // Elegir movimiento
+        if (num_mejores > 0) {
+            // 80% de elegir un movimiento que nos acerque a la salida
+            if (rand() % 100 < 80) {
+                int d = mejores_movimientos[rand() % num_mejores];
+                i += movimientos_posibles[d][0];
+                j += movimientos_posibles[d][1];
+            } else {
+                // 20% de movimiento aleatorio
+                int d = rand() % 4;
+                i += movimientos_posibles[d][0];
+                j += movimientos_posibles[d][1];
+                // Asegurar que no salga de los límites
+                if (i < 0) i = 0;
+                if (i >= FILAS) i = FILAS - 1;
+                if (j < 0) j = 0;
+                if (j >= COLUMNAS) j = COLUMNAS - 1;
+            }
+        } else {
+            // Si no hay movimientos buenos, moverse aleatoriamente
+            int d;
+            do {
+                d = rand() % 4;
+                int ni = i + movimientos_posibles[d][0];
+                int nj = j + movimientos_posibles[d][1];
+                if (ni >= 0 && ni < FILAS && nj >= 0 && nj < COLUMNAS) {
+                    i = ni;
+                    j = nj;
+                    break;
+                }
+            } while (1);
+        }
+        
+        // Evitar ciclos muy cortos
+        if (longitud_principal > 10) {
+            int misma_celda = 0;
+            for (int k = longitud_principal - 10; k < longitud_principal - 1; k++) {
+                if (camino_principal[k][0] == i && camino_principal[k][1] == j) {
+                    misma_celda = 1;
+                    break;
+                }
+            }
+            if (misma_celda) {
+                // Retroceder un poco
+                i = camino_principal[longitud_principal - 5][0];
+                j = camino_principal[longitud_principal - 5][1];
+            }
         }
     }
-    lab->celdas[FILAS-1][COLUMNAS-1] = CAMINO;  // Última celda
     
-    // Añade caminos secundarios aleatorios
-    for (int k = 0; k < FILAS * COLUMNAS / 3; k++) {
-        int f = rand() % FILAS;     // Fila aleatoria
-        int c = rand() % COLUMNAS;  // Columna aleatoria
+    // Agregar la última celda (salida)
+    camino_principal[longitud_principal][0] = i;
+    camino_principal[longitud_principal][1] = j;
+    longitud_principal++;
+    lab->celdas[i][j] = CAMINO;
+    
+    // ===== PASO 2: Crear ramas desde el tronco principal =====
+    int dirs[4][2] = {{-1,0}, {1,0}, {0,-1}, {0,1}};  // arriba, abajo, izquierda, derecha
+    
+    // Crear ramas desde cada celda del camino principal (excepto extremos)
+    for (int idx = 1; idx < longitud_principal - 1; idx++) {
+        int f = camino_principal[idx][0];
+        int c = camino_principal[idx][1];
         
-        // Si es pared y está junto a un camino
-        if (lab->celdas[f][c] == PARED) {
-            if ((f > 0 && lab->celdas[f-1][c] == CAMINO) ||
-                (f < FILAS-1 && lab->celdas[f+1][c] == CAMINO) ||
-                (c > 0 && lab->celdas[f][c-1] == CAMINO) ||
-                (c < COLUMNAS-1 && lab->celdas[f][c+1] == CAMINO)) {
-                lab->celdas[f][c] = CAMINO;  // Convierte a camino
+        // 30% de probabilidad de crear una rama desde esta celda
+        if (rand() % 100 < 30) {
+            // Elegir dirección para la rama (no puede ser la dirección del tronco)
+            int direcciones_posibles[4];
+            int num_direcciones = 0;
+            
+            // Encontrar dirección del tronco en este punto
+            int dir_tronco = -1;
+            if (idx > 0) {
+                int f_prev = camino_principal[idx-1][0];
+                int c_prev = camino_principal[idx-1][1];
+                for (int d = 0; d < 4; d++) {
+                    if (f + dirs[d][0] == f_prev && c + dirs[d][1] == c_prev) {
+                        dir_tronco = d;
+                        break;
+                    }
+                }
+            }
+            
+            // Todas las direcciones excepto la del tronco (si se conoce)
+            for (int d = 0; d < 4; d++) {
+                if (d != dir_tronco) {
+                    direcciones_posibles[num_direcciones] = d;
+                    num_direcciones++;
+                }
+            }
+            
+            if (num_direcciones > 0) {
+                int dir_rama = direcciones_posibles[rand() % num_direcciones];
+                
+                // Crear rama de longitud aleatoria (2-5 celdas)
+                int longitud_rama = 2 + rand() % 4;
+                int rama_f[10], rama_c[10];  // Máximo 10 celdas por rama
+                int longitud_rama_real = 0;
+                
+                int rf = f;
+                int rc = c;
+                
+                for (int paso = 0; paso < longitud_rama; paso++) {
+                    rf += dirs[dir_rama][0];
+                    rc += dirs[dir_rama][1];
+                    
+                    // Verificar límites y que sea pared
+                    if (rf < 0 || rf >= FILAS || rc < 0 || rc >= COLUMNAS || 
+                        lab->celdas[rf][rc] != PARED) {
+                        break;
+                    }
+                    
+                    // Verificar que no toque otro camino (excepto el punto de origen)
+                    int toca_otro_camino = 0;
+                    for (int d = 0; d < 4; d++) {
+                        int nf = rf + dirs[d][0];
+                        int nc = rc + dirs[d][1];
+                        
+                        if (nf >= 0 && nf < FILAS && nc >= 0 && nc < COLUMNAS) {
+                            // No contar el punto de origen de la rama
+                            if (!(nf == f && nc == c)) {
+                                if (lab->celdas[nf][nc] == CAMINO) {
+                                    toca_otro_camino = 1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (toca_otro_camino) {
+                        break;
+                    }
+                    
+                    // Guardar celda de la rama
+                    rama_f[longitud_rama_real] = rf;
+                    rama_c[longitud_rama_real] = rc;
+                    longitud_rama_real++;
+                }
+                
+                // Dibujar la rama si tiene al menos 1 celda
+                if (longitud_rama_real > 0) {
+                    // 80% de probabilidad de dibujar la rama completa
+                    if (rand() % 100 < 80) {
+                        for (int r = 0; r < longitud_rama_real; r++) {
+                            lab->celdas[rama_f[r]][rama_c[r]] = CAMINO;
+                            
+                            // 20% de probabilidad de crear sub-ramas desde esta rama
+                            if (rand() % 100 < 20 && r < longitud_rama_real - 1) {
+                                // Crear una sub-rama desde este punto
+                                int subdirs[4][2] = {{-1,0}, {1,0}, {0,-1}, {0,1}};
+                                int subdir = rand() % 4;
+                                
+                                // No puede ser la dirección opuesta a la rama principal
+                                if (!(subdirs[subdir][0] == -dirs[dir_rama][0] && 
+                                      subdirs[subdir][1] == -dirs[dir_rama][1])) {
+                                    
+                                    int sublongitud = 1 + rand() % 3;
+                                    int srf = rama_f[r];
+                                    int src = rama_c[r];
+                                    
+                                    for (int sp = 0; sp < sublongitud; sp++) {
+                                        srf += subdirs[subdir][0];
+                                        src += subdirs[subdir][1];
+                                        
+                                        if (srf < 0 || srf >= FILAS || src < 0 || src >= COLUMNAS || 
+                                            lab->celdas[srf][src] != PARED) {
+                                            break;
+                                        }
+                                        
+                                        // Verificar que no toque otro camino
+                                        int toca = 0;
+                                        for (int d = 0; d < 4; d++) {
+                                            int nf = srf + dirs[d][0];
+                                            int nc = src + dirs[d][1];
+                                            
+                                            if (nf >= 0 && nf < FILAS && nc >= 0 && nc < COLUMNAS) {
+                                                // No contar el punto de origen
+                                                if (!(nf == rama_f[r] && nc == rama_c[r])) {
+                                                    if (lab->celdas[nf][nc] == CAMINO) {
+                                                        toca = 1;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        
+                                        if (toca) {
+                                            break;
+                                        }
+                                        
+                                        lab->celdas[srf][src] = CAMINO;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // ===== PASO 3: Crear algunos caminos cortos adicionales (hormigas perdidas) =====
+    for (int h = 0; h < FILAS * COLUMNAS / 20; h++) {  // 5% del total
+        // Buscar una celda que sea camino
+        int intentos = 0;
+        int f, c;
+        
+        do {
+            f = rand() % FILAS;
+            c = rand() % COLUMNAS;
+            intentos++;
+        } while (lab->celdas[f][c] != CAMINO && intentos < 100);
+        
+        if (lab->celdas[f][c] == CAMINO) {
+            // Intentar crear un pequeño camino desde aquí
+            int dir = rand() % 4;
+            int longitud = 1 + rand() % 2;  // Muy corto (1-2 celdas)
+            
+            int nf = f;
+            int nc = c;
+            
+            for (int p = 0; p < longitud; p++) {
+                nf += dirs[dir][0];
+                nc += dirs[dir][1];
+                
+                if (nf < 0 || nf >= FILAS || nc < 0 || nc >= COLUMNAS || 
+                    lab->celdas[nf][nc] != PARED) {
+                    break;
+                }
+                
+                // Verificar que no toque otro camino (excepto el origen)
+                int toca = 0;
+                for (int d = 0; d < 4; d++) {
+                    int vf = nf + dirs[d][0];
+                    int vc = nc + dirs[d][1];
+                    
+                    if (vf >= 0 && vf < FILAS && vc >= 0 && vc < COLUMNAS) {
+                        if (!(vf == f && vc == c)) {
+                            if (lab->celdas[vf][vc] == CAMINO) {
+                                toca = 1;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (toca) {
+                    break;
+                }
+                
+                lab->celdas[nf][nc] = CAMINO;
+            }
+        }
+    }
+    
+    // ===== PASO 4: Asegurar conectividad básica =====
+    // Verificar que no haya celdas camino aisladas
+    for (int f = 0; f < FILAS; f++) {
+        for (int c = 0; c < COLUMNAS; c++) {
+            if (lab->celdas[f][c] == CAMINO) {
+                // No verificar entrada y salida
+                if ((f == 0 && c == 0) || (f == FILAS-1 && c == COLUMNAS-1)) {
+                    continue;
+                }
+                
+                int vecinos = 0;
+                if (f > 0 && lab->celdas[f-1][c] == CAMINO) vecinos++;
+                if (f < FILAS-1 && lab->celdas[f+1][c] == CAMINO) vecinos++;
+                if (c > 0 && lab->celdas[f][c-1] == CAMINO) vecinos++;
+                if (c < COLUMNAS-1 && lab->celdas[f][c+1] == CAMINO) vecinos++;
+                
+                if (vecinos == 0) {
+                    // Conectar con el vecino más cercano
+                    if (f > 0) lab->celdas[f-1][c] = CAMINO;
+                    else if (f < FILAS-1) lab->celdas[f+1][c] = CAMINO;
+                    else if (c > 0) lab->celdas[f][c-1] = CAMINO;
+                    else if (c < COLUMNAS-1) lab->celdas[f][c+1] = CAMINO;
+                }
+            }
+        }
+    }
+}
+
+
+/*
+ * generar_desde_grafo
+ * Genera laberinto usando algoritmo de Prim para grafos aleatorios.
+ * Crea laberinto con múltiples caminos posibles y algunos ciclos.
+ */
+void generar_desde_grafo(laberinto* lab) {
+    srand(time(NULL));  // Inicializa generador
+    
+    // Inicializa todo como paredes
+    for (int i = 0; i < FILAS; i++) {
+        for (int j = 0; j < COLUMNAS; j++) {
+            lab->celdas[i][j] = PARED;  // Pared por defecto
+        }
+    }
+    
+    // Crear estructura para grafo
+    int visitado[FILAS][COLUMNAS] = {0};  // Matriz de visitados
+    
+    // Usar celdas impares como nodos del grafo (como en perfecto)
+    for (int i = 1; i < FILAS-1; i += 2) {
+        for (int j = 1; j < COLUMNAS-1; j += 2) {
+            lab->celdas[i][j] = CAMINO;  // Celda de camino (nodo del grafo)
+        }
+    }
+    
+    // Lista de paredes (aristas del grafo)
+    int paredes[FILAS * COLUMNAS * 4][3];  // [fila, columna, dirección]
+    int num_paredes = 0;
+    
+    // Inicializar con paredes entre nodos
+    for (int i = 1; i < FILAS-1; i += 2) {
+        for (int j = 1; j < COLUMNAS-1; j += 2) {
+            // Pared derecha
+            if (j + 2 < COLUMNAS-1) {
+                paredes[num_paredes][0] = i;
+                paredes[num_paredes][1] = j + 1;
+                paredes[num_paredes][2] = 0;  // 0 = derecha
+                num_paredes++;
+            }
+            // Pared abajo
+            if (i + 2 < FILAS-1) {
+                paredes[num_paredes][0] = i + 1;
+                paredes[num_paredes][1] = j;
+                paredes[num_paredes][2] = 1;  // 1 = abajo
+                num_paredes++;
+            }
+        }
+    }
+    
+    // Barajar las paredes aleatoriamente
+    for (int i = 0; i < num_paredes; i++) {
+        int j = rand() % num_paredes;
+        int temp[3];
+        memcpy(temp, paredes[i], sizeof(temp));
+        memcpy(paredes[i], paredes[j], sizeof(temp));
+        memcpy(paredes[j], temp, sizeof(temp));
+    }
+    
+    // Algoritmo de Kruskal simplificado para grafos aleatorios
+    int conjunto[FILAS][COLUMNAS];  // Para unir conjuntos
+    int siguiente_conjunto = 1;
+    
+    for (int i = 0; i < FILAS; i++) {
+        for (int j = 0; j < COLUMNAS; j++) {
+            conjunto[i][j] = 0;
+        }
+    }
+    
+    // Asignar conjuntos iniciales a los nodos
+    for (int i = 1; i < FILAS-1; i += 2) {
+        for (int j = 1; j < COLUMNAS-1; j += 2) {
+            conjunto[i][j] = siguiente_conjunto++;
+        }
+    }
+    
+    // Procesar paredes en orden aleatorio
+    for (int p = 0; p < num_paredes; p++) {
+        int fila_pared = paredes[p][0];
+        int col_pared = paredes[p][1];
+        int direccion = paredes[p][2];
+        
+        int nodo1_fila, nodo1_col, nodo2_fila, nodo2_col;
+        
+        if (direccion == 0) {  // Pared vertical (derecha)
+            nodo1_fila = fila_pared;
+            nodo1_col = col_pared - 1;
+            nodo2_fila = fila_pared;
+            nodo2_col = col_pared + 1;
+        } else {  // Pared horizontal (abajo)
+            nodo1_fila = fila_pared - 1;
+            nodo1_col = col_pared;
+            nodo2_fila = fila_pared + 1;
+            nodo2_col = col_pared;
+        }
+        
+        // Verificar que ambos nodos existen
+        if (nodo1_fila >= 1 && nodo1_fila < FILAS-1 && nodo1_col >= 1 && nodo1_col < COLUMNAS-1 &&
+            nodo2_fila >= 1 && nodo2_fila < FILAS-1 && nodo2_col >= 1 && nodo2_col < COLUMNAS-1) {
+            
+            // Si están en conjuntos diferentes, unirlos
+            if (conjunto[nodo1_fila][nodo1_col] != conjunto[nodo2_fila][nodo2_col]) {
+                // Quitar la pared
+                lab->celdas[fila_pared][col_pared] = CAMINO;
+                
+                // Unir conjuntos
+                int conjunto_viejo = conjunto[nodo2_fila][nodo2_col];
+                int conjunto_nuevo = conjunto[nodo1_fila][nodo1_col];
+                
+                for (int i = 1; i < FILAS-1; i += 2) {
+                    for (int j = 1; j < COLUMNAS-1; j += 2) {
+                        if (conjunto[i][j] == conjunto_viejo) {
+                            conjunto[i][j] = conjunto_nuevo;
+                        }
+                    }
+                }
+            } else {
+                // Ocasionalmente permitir ciclos (30% de probabilidad)
+                if (rand() % 100 < 30) {
+                    lab->celdas[fila_pared][col_pared] = CAMINO;
+                }
+            }
+        }
+    }
+    
+    // Conectar entrada y salida al grafo
+    // Conectar entrada (0,0)
+    if (lab->celdas[1][0] == PARED && lab->celdas[0][1] == PARED) {
+        lab->celdas[1][0] = CAMINO;  // Conectar hacia abajo
+    }
+    
+    // Conectar salida (FILAS-1, COLUMNAS-1)
+    if (lab->celdas[FILAS-2][COLUMNAS-1] == PARED && lab->celdas[FILAS-1][COLUMNAS-2] == PARED) {
+        lab->celdas[FILAS-1][COLUMNAS-2] = CAMINO;  // Conectar hacia izquierda
+    }
+    
+    // Añadir algunos caminos adicionales aleatorios para más complejidad
+    for (int extra = 0; extra < FILAS * COLUMNAS / 10; extra++) {
+        int f = 1 + 2 * (rand() % ((FILAS-2)/2));
+        int c = 1 + 2 * (rand() % ((COLUMNAS-2)/2));
+        
+        // Añadir camino en una dirección aleatoria si es posible
+        int dirs[4][2] = {{-2,0}, {2,0}, {0,-2}, {0,2}};
+        int dir = rand() % 4;
+        int nf = f + dirs[dir][0];
+        int nc = c + dirs[dir][1];
+        
+        if (nf >= 1 && nf < FILAS-1 && nc >= 1 && nc < COLUMNAS-1) {
+            // Verificar si ya hay conexión
+            int pared_fila = f + dirs[dir][0]/2;
+            int pared_col = c + dirs[dir][1]/2;
+            
+            if (lab->celdas[pared_fila][pared_col] == PARED) {
+                // 50% de probabilidad de añadir este camino extra
+                if (rand() % 100 < 50) {
+                    lab->celdas[pared_fila][pared_col] = CAMINO;
+                }
             }
         }
     }
@@ -321,112 +770,7 @@ void generar_con_backtracking(laberinto* lab) {
     }
 }
 
-/*
- * generar_desde_grafo
- * Genera laberinto usando algoritmo de Prim.
- * Crea laberinto con múltiples caminos posibles.
- */
-void generar_desde_grafo(laberinto* lab) {
-    srand(time(NULL));  // Inicializa generador
-    
-    // Inicializa todo como paredes
-    for (int i = 0; i < FILAS; i++) {
-        for (int j = 0; j < COLUMNAS; j++) {
-            lab->celdas[i][j] = PARED;  // Pared por defecto
-        }
-    }
-    
-    int visitado[FILAS][COLUMNAS] = {0};  // Matriz de visitados
-    
-    // Lista de fronteras (celdas a procesar)
-    int fronteras[FILAS * COLUMNAS * 2][2];
-    int num_fronteras = 0;
-    
-    // Empieza desde celda central (1,1)
-    int start_fila = 1;
-    int start_col = 1;
-    
-    lab->celdas[start_fila][start_col] = CAMINO;  // Marca como camino
-    visitado[start_fila][start_col] = 1;          // Marca como visitado
-    
-    int dirs[4][2] = {{-1,0}, {1,0}, {0,-1}, {0,1}};  // 4 direcciones
-    
-    // Agrega fronteras iniciales (2 pasos de distancia)
-    for (int d = 0; d < 4; d++) {
-        int nf = start_fila + dirs[d][0] * 2;  // Dos pasos en dirección d
-        int nc = start_col + dirs[d][1] * 2;
-        
-        if (nf >= 1 && nf < FILAS-1 && nc >= 1 && nc < COLUMNAS-1) {
-            fronteras[num_fronteras][0] = nf;  // Guarda fila
-            fronteras[num_fronteras][1] = nc;  // Guarda columna
-            num_fronteras++;                   // Incrementa contador
-        }
-    }
-    
-    while (num_fronteras > 0) {  // Mientras haya fronteras
-        int idx = rand() % num_fronteras;  // Índice aleatorio
-        int fila = fronteras[idx][0];      // Fila de frontera
-        int col = fronteras[idx][1];       // Columna de frontera
-        
-        // Elimina esta frontera (swap con última)
-        fronteras[idx][0] = fronteras[num_fronteras-1][0];
-        fronteras[idx][1] = fronteras[num_fronteras-1][1];
-        num_fronteras--;  // Reduce contador
-        
-        if (!visitado[fila][col]) {  // Si no está visitada
-            lab->celdas[fila][col] = CAMINO;  // Convierte a camino
-            visitado[fila][col] = 1;          // Marca como visitado
-            
-            // Encuentra vecinos que ya sean caminos
-            int vecinos_camino[4];
-            int num_vecinos_camino = 0;
-            
-            for (int d = 0; d < 4; d++) {
-                int nf = fila + dirs[d][0];  // Vecino en dirección d
-                int nc = col + dirs[d][1];
-                
-                // Verifica que sea camino y visitado
-                if (nf >= 0 && nf < FILAS && nc >= 0 && nc < COLUMNAS &&
-                    lab->celdas[nf][nc] == CAMINO && visitado[nf][nc]) {
-                    vecinos_camino[num_vecinos_camino++] = d;  // Agrega dirección
-                }
-            }
-            
-            if (num_vecinos_camino > 0) {  // Si hay vecinos caminos
-                int dir = vecinos_camino[rand() % num_vecinos_camino];  // Dirección aleatoria
-                int pared_fila = fila + dirs[dir][0];  // Fila de pared
-                int pared_col = col + dirs[dir][1];    // Columna de pared
-                
-                lab->celdas[pared_fila][pared_col] = CAMINO;  // Quita pared
-            }
-            
-            // Agrega nuevas fronteras (2 pasos de distancia)
-            for (int d = 0; d < 4; d++) {
-                int nf = fila + dirs[d][0] * 2;  // Dos pasos
-                int nc = col + dirs[d][1] * 2;
-                
-                if (nf >= 1 && nf < FILAS-1 && nc >= 1 && nc < COLUMNAS-1 &&
-                    !visitado[nf][nc]) {
-                    
-                    // Verifica si ya está en la lista
-                    int ya_en_lista = 0;
-                    for (int i = 0; i < num_fronteras; i++) {
-                        if (fronteras[i][0] == nf && fronteras[i][1] == nc) {
-                            ya_en_lista = 1;  // Ya está en lista
-                            break;
-                        }
-                    }
-                    
-                    if (!ya_en_lista) {  // Si no está en lista
-                        fronteras[num_fronteras][0] = nf;  // Guarda fila
-                        fronteras[num_fronteras][1] = nc;  // Guarda columna
-                        num_fronteras++;                   // Incrementa contador
-                    }
-                }
-            }
-        }
-    }
-}
+
 
 // ==================== VISUALIZACIÓN ====================
 

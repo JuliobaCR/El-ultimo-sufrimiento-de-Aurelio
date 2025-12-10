@@ -684,7 +684,7 @@ void ordenacion_topologica(grafo_matriz* grafo) {
  * Describe su aplicación a laberintos y rendimiento.
  */
 void explicar_algoritmos_seleccion(void) {
-    limpiar_pantalla();
+
     
     printf(COLOR_CYAN "=== EXPLICACIÓN DE ALGORITMOS SELECCIONADOS ===\n\n" COLOR_RESET);
     
@@ -702,5 +702,5 @@ void explicar_algoritmos_seleccion(void) {
     printf("Kruskal: Similar a Prim pero para grafos dispersos.\n");
     printf("BFS: Encuentra camino más corto sin considerar pesos.\n");
     
-    pausa();
+
 }

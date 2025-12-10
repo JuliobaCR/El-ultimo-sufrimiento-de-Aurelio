@@ -1,0 +1,10 @@
+ESTADÍSTICAS DEL LABERINTO: CafeYSufrimiento
+================================
+
+Tamaño: 15 x 15
+Total de celdas: 225
+Paredes: 107 (47.6%)
+Caminos: 118 (52.4%)
+Tiene solución: Sí
+Pasos en solución: 28
+Fecha de generación: Wed Dec 10 00:50:17 2025

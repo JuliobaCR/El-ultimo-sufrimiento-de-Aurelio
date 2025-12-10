@@ -1213,7 +1213,7 @@ void animar_solucion(laberinto* lab, int* camino, int longitud) {
         #ifdef _WIN32
             Sleep(200);  // 200ms para Windows
         #else
-            usleep(200000);  // 200ms para Unix/Linux (200,000 microsegundos)
+            sleep(200000);  // 200ms para Unix/Linux (200,000 microsegundos)
         #endif
     }
 }
